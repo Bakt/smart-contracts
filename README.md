@@ -37,4 +37,5 @@ In my opinion, we could keep the tokens pretty similar to the prototype I just d
 -- Summary --
 
 1) We build a simple prototype between two parties
+
 2) We create a contract that would act as some sort of simple exchange. It would just take care of transferring the tokens since there would be no bid/ask (the token is pegged to the dollar)
