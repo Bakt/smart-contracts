@@ -14,10 +14,15 @@ Option 3: the USD_ETH remains within a stable range. Both parties don't have to 
 
 So to summarize here's what needs to be done:
 1) The emitter creates a contract containing $2 worth of ether (or more)
+
 2) The beneficiary needs to be receiving $1 no matter what happens. SO there is $1 allocated to the notional value of the contract and the remainder user for the margin
+
 3) The USDT_ETH is checked on a regular basis to ensure that there is still $1 and to calculate the margin left (whatever is greater than $1)
+
 4) Either party can unwind the contract at any time: the beneficiary receives $1 worth of ETH and the emitter receives the rest
+
 5) If the margin is greater than $1 (i.e. the total balance is greater than $2) then the emitter can withdraw whatever is greater than $2. Similarly, the emitter can add funds to the contract and replenish the margin: let's say there is only $0.50 left in margin, the emitter can send some funds to make this margin greater
+
 6) If the margin reaches $0.10 then the contract is automatically unwound: the beneficiary receives $1 and the emitter receives whatever balance is left.
 
 Please not that at any time during the contract, the amounts (notional and margin) need to be converted in USD so getting the quote from Poloniex on a regular basis is essential.
