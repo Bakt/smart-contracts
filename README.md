@@ -13,6 +13,7 @@ Option 2: the USD_ETH conversion rate goes up The emitter now has more than $2 i
 Option 3: the USD_ETH remains within a stable range. Both parties don't have to do anything until either party wants to recover their money. At this point the contract can either be unwound (funds are released to both parties: $1 worth of ETH to the beneficary and the remainder of the margin to the emitter) or they can be sold by either party in a way that would change the address of the emitter or the beneficiary. We could even think of a separate contract that would act as a decentralized exchange where these dollar contracts can change hands but that's a discussion for another day.
 
 So to summarize here's what needs to be done:
+
 1) The emitter creates a contract containing $2 worth of ether (or more)
 
 2) The beneficiary needs to be receiving $1 no matter what happens. SO there is $1 allocated to the notional value of the contract and the remainder user for the margin
