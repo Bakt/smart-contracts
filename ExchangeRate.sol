@@ -7,7 +7,7 @@ contract ExchangeRate is usingOraclize {
 
   public uint blockDelay; // minimum delay
   public uint reserve; // value the contract should keep
-
+// exchange       rate should     probably start                    "'''''''''''''''''''''''stale" and go stale after a time (for safety)
   event UpdateExchangeRate(uint exchangeRate);
 
 
