@@ -27,19 +27,12 @@ contract BackedValueContract {
   public SolvencyState solvencyState;
 
   function BackedValueContract(address _beneficiary, uint _notionalValue,
-                               address _exchangeRateAddress)
-                            fetchesExchangeRate() {
+                               address _exchangeRateAddress) {
     emitter = msg.sender;
     beneficiary = _beneficiary;
     notionalValue = _notionalValue;
 
     exchangeRate = ExchangeRate(_exchangeRateAddress);
-  }
-
-  modifier fetchesExchangeRate() {
-    _;
-    exchangeRate.initFetchExchangeRate.call();
-
   }
 
   modifier onlyParticipants() {
