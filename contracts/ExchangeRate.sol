@@ -1,13 +1,14 @@
-import "OraclizeI";
+import "./vendor/OraclizeI.sol";
 
 contract ExchangeRate is usingOraclize {
 
-  public uint exchangeRate;
-  public uint lastBlock;
+  uint public exchangeRate;
+  uint public lastBlock;
 
-  public uint blockDelay; // minimum delay
-  public uint reserve; // value the contract should keep
-// exchange       rate should     probably start                    "'''''''''''''''''''''''stale" and go stale after a time (for safety)
+  uint public blockDelay; // minimum delay
+  uint public reserve; // value the contract should keep
+
+  // TODO exchange rate should probably start "stale" and go stale after a time (for safety)
   event UpdateExchangeRate(uint exchangeRate);
 
 
@@ -22,7 +23,7 @@ contract ExchangeRate is usingOraclize {
 
   modifier notExceedingReserve() {
     _;
-    if (startBalance - this.balance > reserve) throw;
+    if (this.balance < reserve) throw;
   }
 
   function __callback(bytes32 id, string result, bytes proof) {
