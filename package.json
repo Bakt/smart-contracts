@@ -1,0 +1,32 @@
+{
+  "name": "raregem",
+  "version": "1.0.0",
+  "description": "smart contract / dapp development playground",
+  "main": "truffle.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "truffle test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gnidan/RareGem.git"
+  },
+  "keywords": [
+    "ethereum",
+    "truffle",
+    "smart-contract",
+    "playground"
+  ],
+  "author": "g. nicholas d'andrea",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/gnidan/RareGem/issues"
+  },
+  "homepage": "https://github.com/gnidan/RareGem#readme",
+  "devDependencies": {
+    "mocha-generators": "^1.2.0",
+    "truffle-default-builder": "^1.0.3"
+  }
+}
