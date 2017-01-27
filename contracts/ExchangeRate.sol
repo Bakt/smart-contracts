@@ -1,3 +1,5 @@
+pragma solidity ^0.4.7;
+
 import "./vendor/OraclizeI.sol";
 
 contract ExchangeRate is usingOraclize {
@@ -11,9 +13,15 @@ contract ExchangeRate is usingOraclize {
   // TODO exchange rate should probably start "stale" and go stale after a time (for safety)
   event UpdateExchangeRate(uint exchangeRate);
 
+  event Debug(uint step);
+  event Price(uint price);
+  event Result(bytes32 result);
 
   function ExchangeRate() {
+    Debug(0);
+    OAR = OraclizeAddrResolverI(0x6d105a42b36f0a7ef234efcd78692a5623aec231);
     oraclize_setProof(proofType_TLSNotary | proofStorage_IPFS);
+    Debug(1);
   }
 
   modifier notTooFrequently() {
@@ -24,6 +32,9 @@ contract ExchangeRate is usingOraclize {
   modifier notExceedingReserve() {
     _;
     if (this.balance < reserve) throw;
+  }
+
+  function deposit() payable {
   }
 
   function __callback(bytes32 id, string result, bytes proof) {
@@ -37,7 +48,7 @@ contract ExchangeRate is usingOraclize {
       UpdateExchangeRate(exchangeRate);
   }
 
-  function initFetch() notTooFrequently() notExceedingReserve() {
-      oraclize_query("URL", "json(http://api.etherscan.io/api?module=stats&action=ethprice).result.ethusd", 300000);
+  function initFetch() /*notTooFrequently() notExceedingReserve()*/ {
+      bytes32 result = oraclize_query("URL", "json(https://api.etherscan.io/api?module=stats&action=ethprice).result.ethusd", 300000);
   }
 }

@@ -1,7 +1,7 @@
 {
-  "name": "raregem",
-  "version": "1.0.0",
-  "description": "smart contract / dapp development playground",
+  "name": "dollar_token",
+  "version": "0.1.0",
+  "description": "",
   "main": "truffle.js",
   "directories": {
     "test": "test"
@@ -11,20 +11,18 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/gnidan/RareGem.git"
+    "url": "git+https://github.com/CyberNano/dollar_token.git"
   },
   "keywords": [
     "ethereum",
-    "truffle",
-    "smart-contract",
-    "playground"
+    "smart-contract"
   ],
-  "author": "g. nicholas d'andrea",
+  "author": "Felix Watkins and g. nicholas d'andrea",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/gnidan/RareGem/issues"
+    "url": "https://github.com/CyberNano/dollar_token/issues"
   },
-  "homepage": "https://github.com/gnidan/RareGem#readme",
+  "homepage": "https://github.com/CyberNano/dollar_token#readme",
   "devDependencies": {
     "mocha-generators": "^1.2.0",
     "truffle-default-builder": "^1.0.3"
