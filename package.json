@@ -25,6 +25,7 @@
   "homepage": "https://github.com/CyberNano/dollar_token#readme",
   "devDependencies": {
     "mocha-generators": "^1.2.0",
+    "requestify": "^0.2.5",
     "truffle-default-builder": "^1.0.3"
   }
 }

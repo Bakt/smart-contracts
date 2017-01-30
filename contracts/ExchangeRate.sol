@@ -1,54 +1,53 @@
 pragma solidity ^0.4.7;
 
-import "./vendor/OraclizeI.sol";
+import "./OraclizeFacade.sol";
 
-contract ExchangeRate is usingOraclize {
+contract ExchangeRate {
+    uint public exchangeRate;
+    uint public lastBlock;
 
-  uint public exchangeRate;
-  uint public lastBlock;
+    uint public blockDelay; // minimum delay
+    uint public reserve; // value the contract should keep
 
-  uint public blockDelay; // minimum delay
-  uint public reserve; // value the contract should keep
 
-  // TODO exchange rate should probably start "stale" and go stale after a time (for safety)
-  event UpdateExchangeRate(uint exchangeRate);
+    OraclizeFacade oraclize;
 
-  event Debug(uint step);
-  event Price(uint price);
-  event Result(bytes32 result);
+    // TODO exchange rate should probably start "stale" and go stale after a time (for safety)
+    event UpdateExchangeRate(uint exchangeRate);
 
-  function ExchangeRate() {
-    Debug(0);
-    OAR = OraclizeAddrResolverI(0x6d105a42b36f0a7ef234efcd78692a5623aec231);
-    oraclize_setProof(proofType_TLSNotary | proofStorage_IPFS);
-    Debug(1);
-  }
+    event DebugString(string value);
+    event Debug(address value);
+    event Price(uint price);
+    event Result(bytes32 result);
 
-  modifier notTooFrequently() {
-    if (lastBlock + blockDelay >= block.number) throw;
-    _;
-  }
+    function ExchangeRate(address _oraclizeFacade) {
+        oraclize = OraclizeFacade(_oraclizeFacade);
+        oraclize.setCallback(this);
+    }
 
-  modifier notExceedingReserve() {
-    _;
-    if (this.balance < reserve) throw;
-  }
+    modifier notTooFrequently() {
+        if (lastBlock + blockDelay >= block.number) throw;
+        _;
+    }
 
-  function deposit() payable {
-  }
+    modifier notExceedingReserve() {
+        _;
+        if (this.balance < reserve) throw;
+    }
 
-  function __callback(bytes32 id, string result, bytes proof) {
-      if (msg.sender != oraclize_cbAddress()) throw;
-      uint parsedResult = parseInt(result, 3) * 1000000000000000; //note, 1000000000000000 is (1 ether)/10^3
-      if (parsedResult<=0) throw;
+    function deposit() payable {
+    }
 
-      exchangeRate = parsedResult;
-      lastBlock = block.number;
+    function __callback(uint result) {
+        exchangeRate = result;
+        lastBlock = block.number;
 
-      UpdateExchangeRate(exchangeRate);
-  }
+        UpdateExchangeRate(exchangeRate);
+    }
 
-  function initFetch() /*notTooFrequently() notExceedingReserve()*/ {
-      bytes32 result = oraclize_query("URL", "json(https://api.etherscan.io/api?module=stats&action=ethprice).result.ethusd", 300000);
-  }
+    function initFetch() /*notTooFrequently() notExceedingReserve()*/ {
+        // Debug(msg.gas);
+        var result = oraclize.query("URL", "json(https://api.etherscan.io/api?module=stats&action=ethprice).result.ethusd");
+        // Result(result);
+    }
 }

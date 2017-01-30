@@ -15,7 +15,7 @@ contract('ExchangeRate', function(accounts) {
         });
 
         var log = yield fetchEvent(exchangeRate.allEvents());
-
+        console.log(log.args.exchangeRate.toString());
         assert.equal(log.event, "UpdateExchangeRate");
     });
 });
