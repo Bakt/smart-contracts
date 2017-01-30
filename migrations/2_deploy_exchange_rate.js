@@ -1,13 +1,14 @@
-module.exports = function(deployer) {
+module.exports = function(deployer, network) {
     var deployExchangeRate = function (implementation) {
         var address = implementation.address;
         console.log("Deploying ExchangeRate, using facade with address ", address);
         return deployer.deploy(ExchangeRate, address);
     }
+    console.log(network);
 
-    if (deployer.network_id === 'default') {
+    if (network === 'default' || network === 'test') {
         console.log(
-            "Default network_id used, deploying BridgedOraclizeFacade " +
+            "Default or test network, deploying BridgedOraclizeFacade " +
             "with custom OAR address"
         );
         var requestify = require('../node_modules/requestify/index.js');
@@ -30,11 +31,13 @@ module.exports = function(deployer) {
             .then(function() {
                 console.log("Deployed ExchangeRate to " + ExchangeRate.address);
             });
-        //console.log(deployer);
     } else {
         console.log("Deploying OraclizeFacade");
         deployer
-            .deploy(BaseExchangeRate)
-            .then(function() { deployExchangeRate(OraclizeFacade) });
+            .deploy(OraclizeFacade)
+            .then(function() { return deployExchangeRate(OraclizeFacade) })
+            .then(function() {
+                console.log("Deployed ExchangeRate to " + ExchangeRate.address);
+            });
     }
 };
