@@ -6,19 +6,14 @@ contract ExchangeRate {
     uint public exchangeRate;
     uint public lastBlock;
 
-    uint public blockDelay; // minimum delay
-    uint public reserve; // value the contract should keep
+    uint blockDelay; // minimum delay
+    uint reserve; // value the contract should keep
 
 
     OraclizeFacade oraclize;
 
     // TODO exchange rate should probably start "stale" and go stale after a time (for safety)
     event UpdateExchangeRate(uint exchangeRate);
-
-    event DebugString(string value);
-    event Debug(address value);
-    event Price(uint price);
-    event Result(bytes32 result);
 
     function ExchangeRate(address _oraclizeFacade) {
         oraclize = OraclizeFacade(_oraclizeFacade);
@@ -46,8 +41,6 @@ contract ExchangeRate {
     }
 
     function initFetch() /*notTooFrequently() notExceedingReserve()*/ {
-        // Debug(msg.gas);
-        var result = oraclize.query("URL", "json(https://api.etherscan.io/api?module=stats&action=ethprice).result.ethusd");
-        // Result(result);
+        oraclize.query("URL", "json(https://api.etherscan.io/api?module=stats&action=ethprice).result.ethusd");
     }
 }
