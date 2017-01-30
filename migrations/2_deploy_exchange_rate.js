@@ -1,6 +1,6 @@
 module.exports = function(deployer, network) {
-    var deployExchangeRate = function (implementation) {
-        var address = implementation.address;
+    var deployExchangeRate = function (facade) {
+        var address = facade.address;
         console.log("Deploying ExchangeRate, using facade with address ", address);
         return deployer.deploy(ExchangeRate, address);
     }
