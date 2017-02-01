@@ -1,12 +1,15 @@
+var ExchangeRate = artifacts.require("ExchangeRate.sol");
+var BridgedOraclizeFacade = artifacts.require("BridgedOraclizeFacade.sol");
+var OraclizeFacade = artifacts.require("OraclizeFacade.sol");
+
 module.exports = function(deployer, network) {
     var deployExchangeRate = function (facade) {
         var address = facade.address;
         console.log("Deploying ExchangeRate, using facade with address ", address);
         return deployer.deploy(ExchangeRate, address);
     }
-    console.log(network);
 
-    if (network === 'default' || network === 'test') {
+    if (network === 'development') {
         console.log(
             "Default or test network, deploying BridgedOraclizeFacade " +
             "with custom OAR address"
