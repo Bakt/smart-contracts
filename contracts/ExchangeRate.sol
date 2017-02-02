@@ -14,6 +14,7 @@ contract ExchangeRate {
 
     // TODO exchange rate should probably start "stale" and go stale after a time (for safety)
     event UpdateExchangeRate(uint exchangeRate);
+    event FetchExchangeRate();
 
     function ExchangeRate(address _oraclizeFacade) {
         oraclize = OraclizeFacade(_oraclizeFacade);
@@ -42,5 +43,6 @@ contract ExchangeRate {
 
     function initFetch() /*notTooFrequently() notExceedingReserve()*/ {
         oraclize.query("URL", "json(https://api.etherscan.io/api?module=stats&action=ethprice).result.ethusd");
+        FetchExchangeRate();
     }
 }
