@@ -1,0 +1,31 @@
+{
+  "name": "dollar_token",
+  "version": "0.1.0",
+  "description": "",
+  "main": "truffle.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "truffle test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CyberNano/dollar_token.git"
+  },
+  "keywords": [
+    "ethereum",
+    "smart-contract"
+  ],
+  "author": "Felix Watkins and g. nicholas d'andrea",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/CyberNano/dollar_token/issues"
+  },
+  "homepage": "https://github.com/CyberNano/dollar_token#readme",
+  "devDependencies": {
+    "mocha-generators": "^1.2.0",
+    "requestify": "^0.2.5",
+    "truffle-default-builder": "^1.0.3"
+  }
+}

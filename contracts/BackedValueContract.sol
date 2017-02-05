@@ -1,30 +1,31 @@
-import "./ExchangeRate";
+pragma solidity ^0.4.7;
 
-
+import "./ExchangeRate.sol";
 
 contract BackedValueContract {
-  public address emitter;
-  public address beneficiary;
+  address public emitter;
+  address public beneficiary;
 
   // balance of contract is value on chain
-  public uint notionalValue;
+  uint public notionalValue;
 
   // withdrawal balances?
 
   ExchangeRate exchangeRate;
 
-  public constant uint warningThreshold = 0.1 ether * notionalValue;
+  uint public constant warningThreshold = 0.1 ether * notionalValue;
 
-
-  enum SolvencyState {
+  enum State {
     Solvent,
     Warning,
     Insolvent
   }
 
+  event NowSolvent(uint solvency);
+  event NowWarning(uint solvency);
+  event NowInsolvent();
 
-
-  public SolvencyState solvencyState;
+  State public solvencyState;
 
   function BackedValueContract(address _beneficiary, uint _notionalValue,
                                address _exchangeRateAddress) {
@@ -40,38 +41,37 @@ contract BackedValueContract {
   }
 
   function getSolvency() constant returns (uint) {
-    return this.balance - (notionalValue / exchangeRate.exchangeRate);
+    return this.balance - (notionalValue / exchangeRate.exchangeRate());
   }
 
-  function getCurrentState() constant internal returns (SolvencyState) {
+  function getCurrentState() constant internal returns (State) {
     var excess = getSolvency();
     if (excess > warningThreshold) {
-      return Solvent;
+      return State.Solvent;
     } else if (excess > 0) {
-      return Warning;
+      return State.Warning;
     } else {
-      return Insolvent;
+      return State.Insolvent;
     }
   }
 
-  function onStateChange() onlyOnChangedState internal {
+  function onStateChange() /*onlyOnChangedState*/ internal {
     var enteredState = getCurrentState();
     var solvency = getSolvency();
 
-    if (enteredState == Solvent) {
+    if (enteredState == State.Solvent) {
       NowSolvent(solvency);
       // onEnterSolvent()
-    } else if (enteredState == Warning) {
+    } else if (enteredState == State.Warning) {
       NowWarning(solvency);
       // onEnterWarning();
-    } else if (enteredState == Insolvent) {
+    } else if (enteredState == State.Insolvent) {
       NowInsolvent();
       onEnterInsolvent();
     }
   }
 
   function onEnterInsolvent() internal {
-    beneficiaryOwed = //
   }
 
   function withdraw() onlyParticipants(){
