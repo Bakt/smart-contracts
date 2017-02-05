@@ -16,6 +16,10 @@ contract ExchangeRate {
     event FetchExchangeRate();
 
     function ExchangeRate(address _servicesAddress) {
+        updateServices(_servicesAddress);
+    }
+
+    function updateServices(address _servicesAddress) {
         ServicesI services = ServicesI(_servicesAddress);
 
         oraclize = OraclizeFacade(services.ORACLIZE_FACADE());
