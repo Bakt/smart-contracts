@@ -3,9 +3,9 @@ pragma solidity ^0.4.8;
 import {IndexedEnumerableSetLib} from "./vendor/IndexedEnumerableSetLib.sol";
 
 import "./ExchangeRate.sol";
-import "./ManagerI.sol";
+import "./ServicesI.sol";
 
-contract Manager is ManagerI {
+contract Services is ServicesI {
     mapping (bytes32 => address) services;
 
     event MissingService(bytes32 name);
@@ -13,7 +13,7 @@ contract Manager is ManagerI {
     using IndexedEnumerableSetLib for IndexedEnumerableSetLib.IndexedEnumerableSet;
     IndexedEnumerableSetLib.IndexedEnumerableSet missingServices;
 
-    function Manager() {
+    function Services() {
         missingServices.add(_ORACLIZE_FACADE);
         missingServices.add(_EXCHANGE_RATE);
     }

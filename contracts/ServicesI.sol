@@ -2,7 +2,7 @@ pragma solidity ^0.4.8;
 
 import "./ExchangeRateCallbackI.sol";
 
-contract ManagerI is ExchangeRateCallbackI {
+contract ServicesI is ExchangeRateCallbackI {
     bytes32 public _ORACLIZE_FACADE = sha3("OraclizeFacade");
     bytes32 public _EXCHANGE_RATE = sha3("ExchangeRate");
 

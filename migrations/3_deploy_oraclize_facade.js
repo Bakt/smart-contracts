@@ -1,4 +1,4 @@
-var Manager = artifacts.require("Manager.sol");
+var Services = artifacts.require("Services.sol");
 var BridgedOraclizeFacade = artifacts.require("BridgedOraclizeFacade.sol");
 var OraclizeFacade = artifacts.require("OraclizeFacade.sol");
 
@@ -42,9 +42,9 @@ module.exports = function(deployer, network) {
             facade = instance;
             console.log("Specifying facade service ", facade.address);
             console.log(web3.sha3("OraclizeFacade"));
-            return Manager.deployed();
-        }).then(function (manager) {
-            return manager.specifyService(
+            return Services.deployed();
+        }).then(function (services) {
+            return services.specifyService(
                 web3.sha3("OraclizeFacade"), facade.address
             ).then(function () {
                 console.log("Service specified");
