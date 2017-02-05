@@ -8,10 +8,6 @@ contract('ExchangeRate', function(accounts) {
     it("should allow triggering price fetch", function* () {
         let exchangeRate = yield ExchangeRate.deployed();
 
-        yield exchangeRate.deposit.sendTransaction(
-            {value: web3.toBigNumber('6000000000000000'), from: accounts[0]}
-        );
-
         let result = yield exchangeRate.initFetch();
 
         let fetchEventHappened = false;
