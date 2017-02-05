@@ -1,47 +1,32 @@
 pragma solidity ^0.4.7;
 
 import "./OraclizeFacade.sol";
+import "./ManagerI.sol";
 
 contract ExchangeRate {
     uint public exchangeRate;
     uint public lastBlock;
 
-    uint blockDelay; // minimum delay
-    uint reserve; // value the contract should keep
-
-
-    OraclizeFacade oraclize;
+    ManagerI manager;
 
     // TODO exchange rate should probably start "stale" and go stale after a time (for safety)
     event UpdateExchangeRate(uint exchangeRate);
     event FetchExchangeRate();
 
-    function ExchangeRate(address _oraclizeFacade) {
-        oraclize = OraclizeFacade(_oraclizeFacade);
-        oraclize.setCallback(this);
+    function ExchangeRate(address _managerAddress) {
+        manager = ManagerI(_managerAddress);
     }
 
-    modifier notTooFrequently() {
-        if (lastBlock + blockDelay >= block.number) throw;
-        _;
-    }
-
-    modifier notExceedingReserve() {
-        _;
-        if (this.balance < reserve) throw;
-    }
-
-    function deposit() payable {
-    }
-
-    function __callback(uint result) {
-        exchangeRate = result;
+    function receiveExchangeRate(uint exchangeRate) {
         lastBlock = block.number;
-
         UpdateExchangeRate(exchangeRate);
+
+        manager.receiveExchangeRate(exchangeRate);
     }
 
-    function initFetch() /*notTooFrequently() notExceedingReserve()*/ {
+    function initFetch() {
+        var oraclize = OraclizeFacade(manager.ORACLIZE_FACADE());
+        oraclize.setCallback(this);
         oraclize.query("URL", "json(https://api.etherscan.io/api?module=stats&action=ethprice).result.ethusd");
         FetchExchangeRate();
     }
