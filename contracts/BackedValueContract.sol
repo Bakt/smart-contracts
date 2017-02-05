@@ -27,13 +27,15 @@ contract BackedValueContract {
 
   State public solvencyState;
 
-  function BackedValueContract(address _beneficiary, uint _notionalValue,
-                               address _exchangeRateAddress) {
-    emitter = msg.sender;
+  function BackedValueContract(address _emitter,
+                               address _beneficiary,
+                               uint _notionalValue
+                               /*address _exchangeRateAddress*/) {
+    emitter = _emitter;
     beneficiary = _beneficiary;
     notionalValue = _notionalValue;
 
-    exchangeRate = ExchangeRate(_exchangeRateAddress);
+    // exchangeRate = ExchangeRate(_exchangeRateAddress);
   }
 
   modifier onlyParticipants() {
