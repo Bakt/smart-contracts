@@ -2,10 +2,10 @@ pragma solidity ^0.4.8;
 
 import {IndexedEnumerableSetLib} from "./vendor/IndexedEnumerableSetLib.sol";
 
-import "./ExchangeRate.sol";
 import "./ServicesI.sol";
+import "./ExchangeRateCallbackI.sol";
 
-contract Services is ServicesI {
+contract Services is ServicesI, ExchangeRateCallbackI {
     mapping (bytes32 => address) services;
 
     event MissingService(bytes32 name);
@@ -43,11 +43,6 @@ contract Services is ServicesI {
         if (services[name] == 0x0) throw;
 
         return services[name];
-    }
-
-    function initCascade() requireReady {
-        ExchangeRate exchangeRate = ExchangeRate(EXCHANGE_RATE);
-        exchangeRate.initFetch();
     }
 
     function receiveExchangeRate(uint exchangeRate) requireReady {
