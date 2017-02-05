@@ -25,7 +25,7 @@ module.exports = function(deployer, network) {
     }
 
     var deployFacade = function() {
-        console.log("Deploying OraclizeFacade");
+        console.log("  * Deploying OraclizeFacade");
         return OraclizeFacade.new();
     }
 
@@ -37,17 +37,20 @@ module.exports = function(deployer, network) {
     }
 
     var facade;
-    return facadeStrategy()
+    return deployer.
+        then(function () {
+            return facadeStrategy();
+        })
         .then(function (instance) {
             facade = instance;
-            console.log("Specifying facade service ", facade.address);
-            console.log(web3.sha3("OraclizeFacade"));
+            console.log("  * Specifying facade service ", facade.address);
+            console.log("  * OraclizeFacade: ", web3.sha3("OraclizeFacade"));
             return Services.deployed();
         }).then(function (services) {
             return services.specifyService(
                 web3.sha3("OraclizeFacade"), facade.address
             ).then(function () {
-                console.log("Service specified");
+                console.log("  * Service specified");
             });
         });
 };
