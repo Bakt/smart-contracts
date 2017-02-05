@@ -15,6 +15,9 @@ contract ExchangeRate {
 
     function ExchangeRate(address _managerAddress) {
         manager = ManagerI(_managerAddress);
+
+        var oraclize = OraclizeFacade(manager.ORACLIZE_FACADE());
+        oraclize.setCallback(this);
     }
 
     function receiveExchangeRate(uint exchangeRate) {
@@ -26,7 +29,6 @@ contract ExchangeRate {
 
     function initFetch() {
         var oraclize = OraclizeFacade(manager.ORACLIZE_FACADE());
-        oraclize.setCallback(this);
         oraclize.query("URL", "json(https://api.etherscan.io/api?module=stats&action=ethprice).result.ethusd");
         FetchExchangeRate();
     }

@@ -37,10 +37,11 @@ contract Manager is ManagerI {
     }
 
     function serviceAddress(bytes32 name)
-        requireReady
         constant
         returns (address)
     {
+        if (services[name] == 0x0) throw;
+
         return services[name];
     }
 
