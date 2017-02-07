@@ -1,56 +1,44 @@
+const co = require('../node_modules/co');
+const requestify = require('../node_modules/requestify');
+
 var Services = artifacts.require("Services.sol");
 var BridgedOraclizeFacade = artifacts.require("BridgedOraclizeFacade.sol");
 var OraclizeFacade = artifacts.require("OraclizeFacade.sol");
 
+const deployDevFacade = co.wrap(function *(deployer) {
+    console.log(
+        "  Development or test network, deploying BridgedOraclizeFacade"
+    );
+
+    let response = yield requestify.get('http://oraclize-bridge-announce');
+    let oar = response.body;
+
+    yield deployer.deploy(BridgedOraclizeFacade, oar);
+    return yield BridgedOraclizeFacade.deployed();
+});
+
+const deployExternFacade = co.wrap(function *(deployer) {
+    yield deployer.deploy(OraclizeFacade);
+    return yield BridgedOraclizeFacade.deployed();
+});
+
 module.exports = function(deployer, network) {
-    var deployDevelopmentFacade = function() {
-        console.log(
-            "Default or test network, deploying BridgedOraclizeFacade " +
-            "with custom OAR address"
-        );
-        var requestify = require('../node_modules/requestify/index.js');
-
-        return deployer
-            .then(function () {
-                return requestify.get('http://oraclize-bridge-announce')
-            })
-            .then(function(response) {
-                var oar = response.body;
-                return oar;
-            })
-            .then(function (oar) {
-                console.log("Deploying BridgedOraclizeFacade(" + oar + ")");
-                return BridgedOraclizeFacade.new(oar);
-            })
-    }
-
-    var deployFacade = function() {
-        console.log("  * Deploying OraclizeFacade");
-        return OraclizeFacade.new();
-    }
-
     var facadeStrategy;
     if (network === 'development') {
-        facadeStrategy = deployDevelopmentFacade;
+        facadeStrategy = deployDevFacade;
     } else {
-        facadeStrategy = deployFacade;
+        facadeStrategy = deployExternFacade;
     }
 
-    var facade;
-    return deployer.
-        then(function () {
-            return facadeStrategy();
-        })
-        .then(function (instance) {
-            facade = instance;
-            console.log("  * Specifying facade service ", facade.address);
-            console.log("  * OraclizeFacade: ", web3.sha3("OraclizeFacade"));
-            return Services.deployed();
-        }).then(function (services) {
-            return services.specifyService(
-                web3.sha3("OraclizeFacade"), facade.address
-            ).then(function () {
-                console.log("  * Service specified");
-            });
-        });
+    return deployer.then(co.wrap(function *() {
+        let facade = yield facadeStrategy(deployer);
+
+        console.log("  Registering facade service...");
+        let services = yield Services.deployed();
+        yield services.specifyService(
+            web3.sha3("OraclizeFacade"), facade.address
+        )
+
+        return facade;
+    }));
 };
