@@ -3,10 +3,9 @@ const requestify = require('../node_modules/requestify');
 const { asyncDeploy } = require('../lib/deployment');
 
 var Services = artifacts.require("Services.sol");
-var BridgedOraclizeFacade = artifacts.require("BridgedOraclizeFacade.sol");
-var OraclizeFacade = artifacts.require("OraclizeFacade.sol");
 
 const deployDevFacade = co.wrap(function *(deployer) {
+    let BridgedOraclizeFacade = artifacts.require("BridgedOraclizeFacade.sol");
     console.log(
         "  Development or test network, deploying BridgedOraclizeFacade"
     );
@@ -19,8 +18,9 @@ const deployDevFacade = co.wrap(function *(deployer) {
 });
 
 const deployExternFacade = co.wrap(function *(deployer) {
+    let OraclizeFacade = artifacts.require("OraclizeFacade.sol");
     yield deployer.deploy(OraclizeFacade);
-    return yield BridgedOraclizeFacade.deployed();
+    return yield OraclizeFacade.deployed();
 });
 
 module.exports = asyncDeploy(function *(deployer, network) {
