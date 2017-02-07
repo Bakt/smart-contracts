@@ -1,9 +1,7 @@
 let ExchangeRate = artifacts.require("ExchangeRate.sol");
 
-let { deployService } = require('../lib/deployment');
+let { asyncDeploy, deployService } = require('../lib/deployment');
 
-module.exports = function(deployer) {
-    return deployer.then(function() {
-        return deployService(web3, deployer, artifacts, ExchangeRate);
-    });
-};
+module.exports = asyncDeploy(function *(deployer) {
+    return yield deployService(web3, deployer, artifacts, ExchangeRate);
+});

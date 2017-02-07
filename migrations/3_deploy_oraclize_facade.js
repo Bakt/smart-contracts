@@ -1,5 +1,6 @@
 const co = require('../node_modules/co');
 const requestify = require('../node_modules/requestify');
+const { asyncDeploy } = require('../lib/deployment');
 
 var Services = artifacts.require("Services.sol");
 var BridgedOraclizeFacade = artifacts.require("BridgedOraclizeFacade.sol");
@@ -22,7 +23,7 @@ const deployExternFacade = co.wrap(function *(deployer) {
     return yield BridgedOraclizeFacade.deployed();
 });
 
-module.exports = function(deployer, network) {
+module.exports = asyncDeploy(function *(deployer, network) {
     var facadeStrategy;
     if (network === 'development') {
         facadeStrategy = deployDevFacade;
@@ -30,15 +31,13 @@ module.exports = function(deployer, network) {
         facadeStrategy = deployExternFacade;
     }
 
-    return deployer.then(co.wrap(function *() {
-        let facade = yield facadeStrategy(deployer);
+    let facade = yield facadeStrategy(deployer);
 
-        console.log("  Registering facade service...");
-        let services = yield Services.deployed();
-        yield services.specifyService(
-            web3.sha3("OraclizeFacade"), facade.address
-        )
+    console.log("  Registering facade service...");
+    let services = yield Services.deployed();
+    yield services.specifyService(
+        web3.sha3("OraclizeFacade"), facade.address
+    )
 
-        return facade;
-    }));
-};
+    return facade;
+});
