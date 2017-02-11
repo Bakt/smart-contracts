@@ -1,34 +1,33 @@
 pragma solidity ^0.4.8;
 
-import "./ServicesI.sol";
 import "./BackedValueContract.sol";
 
 contract Factory {
-    ServicesI services;
+    address servicesAddress;
 
     function Factory(address _servicesAddress) {
-        services = ServicesI(_servicesAddress);
+        servicesAddress = _servicesAddress;
     }
 
     event NewBackedValueContract(
         address contractAddress,
         address emitter,
         address beneficiary,
-        uint notionalValue
+        uint notionalCents
     );
 
     function createBackedValueContract(address beneficiary,
-                                       uint notionalValue)
+                                       uint notionalCents)
         returns (address)
     {
         var emitter = msg.sender;
 
         address bvc = new BackedValueContract(
-            emitter, beneficiary, notionalValue
+            servicesAddress, emitter, beneficiary, notionalCents
         );
 
         NewBackedValueContract(
-            bvc, emitter, beneficiary, notionalValue
+            bvc, emitter, beneficiary, notionalCents
         );
 
         return bvc;

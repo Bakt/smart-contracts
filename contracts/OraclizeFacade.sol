@@ -12,9 +12,25 @@ contract OraclizeFacade is usingOraclize {
 
     function __callback(bytes32 id, string result, bytes proof) {
         if (msg.sender != oraclize_cbAddress()) throw;
-        uint parsedResult = parseInt(result, 3) * 1000000000000000; //note, 1000000000000000 is (1 ether)/10^3
-        if (parsedResult<=0) throw;
-        cb.receiveExchangeRate(parsedResult);
+        // parseInt(result, 3)      cents / eth
+        //
+        //   wei / cent
+        //
+        //
+        //  -> cents / wei
+        //  wei/eth = 10**18
+        //
+        //  cents       wei
+        //  -------  /  ------
+        //  eth         eth
+        //
+        //  wei      cents
+        //  ---   /  -----  == wei/cents
+        //  eth      eth
+        uint centsPerEth = parseInt(result, 3);
+        uint weiPerEth = 10**18;
+        uint weiPerCent = weiPerEth / centsPerEth;
+        cb.receiveExchangeRate(weiPerCent);
     }
 
     function query(string datasource,

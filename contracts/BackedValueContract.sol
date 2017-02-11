@@ -1,85 +1,77 @@
 pragma solidity ^0.4.7;
 
+import "./vendor/MathLib.sol";
+
 import "./ExchangeRate.sol";
+import "./ServicesI.sol";
 
 contract BackedValueContract {
-  address public emitter;
-  address public beneficiary;
+    using MathLib for uint;
 
-  // balance of contract is value on chain
-  uint public notionalValue;
+    address public emitter;
+    address public beneficiary;
 
-  // withdrawal balances?
+    // balance of contract is value on chain
+    uint public notionalCents;
 
-  ExchangeRate exchangeRate;
+    // withdrawal balances?
 
-  uint public constant warningThreshold = 0.1 ether * notionalValue;
+    ExchangeRate exchangeRate;
 
-  enum State {
-    Solvent,
-    Warning,
-    Insolvent
-  }
+    uint INITIAL_MARGIN_REQUIREMENT = 2;
 
-  event NowSolvent(uint solvency);
-  event NowWarning(uint solvency);
-  event NowInsolvent();
+    function BackedValueContract(address _servicesAddress,
+                                 address _emitter,
+                                 address _beneficiary,
+                                 uint _notionalCents) payable {
 
-  State public solvencyState;
+        updateServices(_servicesAddress);
 
-  function BackedValueContract(address _emitter,
-                               address _beneficiary,
-                               uint _notionalValue
-                               /*address _exchangeRateAddress*/) {
-    emitter = _emitter;
-    beneficiary = _beneficiary;
-    notionalValue = _notionalValue;
+        emitter = _emitter;
+        beneficiary = _beneficiary;
+        notionalCents = _notionalCents;
 
-    // exchangeRate = ExchangeRate(_exchangeRateAddress);
+        ensureBackedValue(msg.value);
+        // exchangeRate = ExchangeRate(_exchangeRateAddress);
+    }
+
+    function ensureBackedValue(uint providedWei) {
+        // exchangeRate    wei / cent
+        // msg.value       wei
+        //
+        // maximum notional value:
+        // exchangeRate / msg.value / INITIAL_MARGIN_REQUIREMENT :: cents
+        //
+        uint weiPerCent = exchangeRate.weiPerCent();
+
+        uint providedCents = providedWei / weiPerCent;
+
+        uint maximumNotionalCents = providedCents / INITIAL_MARGIN_REQUIREMENT;
+
+        if (notionalCents > maximumNotionalCents) throw;
+    }
+
+    function updateServices(address _servicesAddress) {
+        ServicesI services = ServicesI(_servicesAddress);
+
+        exchangeRate = ExchangeRate(services.EXCHANGE_RATE());
+    }
+
+
+
+  function withdraw() onlyParticipants {
+    // beneficiary may withdraw what they are owed
+      // when beneficiary withdraws, set notionalValue = 0
+    // emitter may withdraw any amount in excess of that
+
+    if (msg.sender == emitter) {
+    }
   }
 
   modifier onlyParticipants() {
     if (msg.sender == emitter || msg.sender == beneficiary) _;
   }
 
-  function getSolvency() constant returns (uint) {
-    return this.balance - (notionalValue / exchangeRate.exchangeRate());
-  }
-
-  function getCurrentState() constant internal returns (State) {
-    var excess = getSolvency();
-    if (excess > warningThreshold) {
-      return State.Solvent;
-    } else if (excess > 0) {
-      return State.Warning;
-    } else {
-      return State.Insolvent;
-    }
-  }
-
-  function onStateChange() /*onlyOnChangedState*/ internal {
-    var enteredState = getCurrentState();
-    var solvency = getSolvency();
-
-    if (enteredState == State.Solvent) {
-      NowSolvent(solvency);
-      // onEnterSolvent()
-    } else if (enteredState == State.Warning) {
-      NowWarning(solvency);
-      // onEnterWarning();
-    } else if (enteredState == State.Insolvent) {
-      NowInsolvent();
-      onEnterInsolvent();
-    }
-  }
-
-  function onEnterInsolvent() internal {
-  }
-
-  function withdraw() onlyParticipants(){
-    // beneficiary may withdraw what they are owed
-    // emitter may withdraw any amount in excess of that
-  }
 
   function () payable {
     // emitter can pay into value in case of margin decrease

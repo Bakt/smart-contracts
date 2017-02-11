@@ -45,7 +45,7 @@ contract Services is ServicesI, ExchangeRateCallbackI {
         return services[name];
     }
 
-    function receiveExchangeRate(uint exchangeRate) requireReady {
+    function receiveExchangeRate(uint weiPerCent) requireReady {
     }
 
 }

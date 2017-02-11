@@ -11,16 +11,15 @@ contract("Factory", function(accounts) {
 
     it("should deploy BackedValueContracts", function* () {
         // setup
-        var notionalValue = web3.toBigNumber('1000000');
+        var notionalCents = web3.toBigNumber('1000000');
         var factory = yield Factory.deployed();
 
         // action
         yield factory.createBackedValueContract(
-            beneficiary, notionalValue, {from: emitter}
+            beneficiary, notionalCents, {from: emitter}
         );
 
         var log = yield fetchEvent(factory.NewBackedValueContract("latest"));
-        console.log(log);
 
         var bvcAddress = log.args.contractAddress;
 
@@ -29,7 +28,7 @@ contract("Factory", function(accounts) {
 
         var actualBeneficiary = yield bvc.beneficiary();
         var actualEmitter = yield bvc.emitter();
-        var actualNotionalValue = yield bvc.notionalValue();
+        var actualNotionalValue = yield bvc.notionalCents();
 
         assert.equal(
             beneficiary.toString(), actualBeneficiary.toString(),
@@ -40,8 +39,8 @@ contract("Factory", function(accounts) {
             "emitter mismatch"
         );
         assert.equal(
-            notionalValue.toString(), actualNotionalValue.toString(),
-            "notionalValue mismatch"
+            notionalCents.toString(), actualNotionalValue.toString(),
+            "notionalCents mismatch"
         );
 
     });
