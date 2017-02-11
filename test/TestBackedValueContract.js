@@ -20,7 +20,7 @@ contract('BackedValueContract', function(accounts) {
         // action
         var bvc = yield BackedValueContract.new(
             services.address, emitter, beneficiary, notionalCents,
-            {from: emitter}
+            {value: web3.toBigNumber('0'), from: emitter}
         );
 
         // checking result
