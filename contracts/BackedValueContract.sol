@@ -1,13 +1,9 @@
 pragma solidity ^0.4.7;
 
-import "./vendor/MathLib.sol";
-
 import "./ExchangeRate.sol";
 import "./ServicesI.sol";
 
 contract BackedValueContract {
-    using MathLib for uint;
-
     address public emitter;
     address public beneficiary;
 
@@ -23,7 +19,10 @@ contract BackedValueContract {
     function BackedValueContract(address _servicesAddress,
                                  address _emitter,
                                  address _beneficiary,
-                                 uint _notionalCents) payable {
+                                 uint _notionalCents)
+        ensureBackedValue
+        payable
+    {
 
         updateServices(_servicesAddress);
 
@@ -31,17 +30,19 @@ contract BackedValueContract {
         beneficiary = _beneficiary;
         notionalCents = _notionalCents;
 
-        ensureBackedValue(msg.value);
         // exchangeRate = ExchangeRate(_exchangeRateAddress);
     }
 
-    function ensureBackedValue(uint providedWei) {
+    modifier ensureBackedValue() {
+        _;
+
         // exchangeRate    wei / cent
         // msg.value       wei
         //
         // maximum notional value:
         // exchangeRate / msg.value / INITIAL_MARGIN_REQUIREMENT :: cents
         //
+        uint providedWei = msg.value;
         uint weiPerCent = exchangeRate.weiPerCent();
 
         uint providedCents = providedWei / weiPerCent;
