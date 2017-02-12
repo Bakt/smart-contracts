@@ -11,7 +11,7 @@ function fetchEvent(events) {
 }
 
 function cents(c) {
-    return web3.toBigNumber((c * 10 ** 18) / 100)
+    return web3.toBigNumber(c);
 }
 
 module.exports = {
