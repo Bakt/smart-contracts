@@ -8,6 +8,8 @@ contract ExchangeRate {
     uint public weiPerCent;
     uint public lastBlock;
 
+    uint public centsPerEth;
+
     OraclizeFacade oraclize;
     ExchangeRateCallbackI receiver;
 
@@ -28,12 +30,27 @@ contract ExchangeRate {
         receiver = ExchangeRateCallbackI(services);
     }
 
-    function receiveExchangeRate(uint _weiPerCent) {
+    function receiveExchangeRate(uint _centsPerEth) {
+        //  wei/eth = 10**18
+        //
+        //  cents       wei         cents   eth
+        //  -------  /  ------  ==  ----- * ---
+        //  eth         eth         eth     wei
+        //
+        //  wei      cents      wei   eth       wei
+        //  ---   /  -----  ==  --- * ---    == ---
+        //  eth      eth        eth   cents     cents
+
+        uint _weiPerEth = 10**18;
+        uint _weiPerCent = _weiPerEth / _centsPerEth;
+
+        centsPerEth = _centsPerEth;
         weiPerCent = _weiPerCent;
         lastBlock = block.number;
+
         UpdateExchangeRate(_weiPerCent);
 
-        receiver.receiveExchangeRate(_weiPerCent);
+        receiver.receiveExchangeRate(_centsPerEth);
     }
 
     function initFetch() {

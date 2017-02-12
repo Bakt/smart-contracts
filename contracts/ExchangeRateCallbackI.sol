@@ -1,7 +1,7 @@
 pragma solidity ^0.4.7;
 
 contract ExchangeRateCallbackI {
-    function receiveExchangeRate(uint weiPerCent);
+    function receiveExchangeRate(uint centsPerEth);
 }
 
 
