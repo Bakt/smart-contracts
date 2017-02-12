@@ -4,14 +4,22 @@ var { cents, fetchEvent } = require('./helpers');
 
 var BackedValueContract = artifacts.require('BackedValueContract.sol');
 var Services = artifacts.require('Services.sol');
+var ExchangeRate = artifacts.require('ExchangeRate.sol');
 
 contract('BackedValueContract', function(accounts) {
     let emitter = accounts[0];
     let beneficiary = accounts[1];
     var services;
+    var weiPerCent;
 
     before(function *() {
         services = yield Services.deployed();
+        exchangeRate = yield ExchangeRate.deployed();
+
+        yield exchangeRate.initFetch();
+        yield fetchEvent(exchangeRate.UpdateExchangeRate("latest"));
+
+        weiPerCent = yield exchangeRate.weiPerCent();
     });
 
     it("should be deployable", function* () {
@@ -43,26 +51,41 @@ contract('BackedValueContract', function(accounts) {
     });
 
     it("should require 2x ETH of notionalCents", function* () {
-        var notionalCents = cents(100);
-        var bvc;
+        let notionalCents = cents(10);
+        let bvc;
+        let bufferMargin;
 
         // attempt to deploy without sending enough ether
         // ensure fails (somehow)
-        var ethValue = web3.toBigNumber('0');
+        bufferMargin = 1.9;
+        var notEnoughWei = notionalCents.times(bufferMargin).times(weiPerCent);
+
         var failed = false;
         try {
             bvc = yield BackedValueContract.new(
                 services.address, emitter, beneficiary, notionalCents,
-                {value: ethValue, from: emitter}
+                {value: notEnoughWei, from: emitter}
             );
         } catch (e) {
-            console.log(e);
             failed = true;
         }
         assert.equal(failed, true);
 
         // attempt to deploy AND send enough ether
         // ensure succeeds
+        bufferMargin = 2.1;
+        var enoughWei = notionalCents.times(bufferMargin).times(weiPerCent);
+
+        bvc = yield BackedValueContract.new(
+            services.address, emitter, beneficiary, notionalCents,
+            {value: enoughWei, from: emitter}
+        );
+
+        var actualNotionalCents = yield bvc.notionalCents();
+        assert.equal(
+            notionalCents.toString(), actualNotionalCents.toString(),
+            "notionalCents mismatch"
+        );
     });
 
     // it("should allow beneficiary withdrawal", function* () {
