@@ -1,5 +1,8 @@
 pragma solidity ^0.4.7;
 
+import "contracts/vendor/MathLib.sol";
+import "contracts/vendor/SafeSendLib.sol";
+
 import "./ExchangeRate.sol";
 import "./ServicesI.sol";
 
