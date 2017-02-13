@@ -1,6 +1,6 @@
 pragma solidity ^0.4.7;
 
-import "contracts/vendor/MathLib.sol";
+import "./MathLib.sol";
 
 
 library SafeSendLib {
