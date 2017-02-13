@@ -12,6 +12,12 @@ contract('BackedValueContract', function(accounts) {
     var services;
     var weiPerCent;
 
+    let minimumWeiForCents = function(cents, weiPerCent) {
+        let bufferMargin = 2.1;
+
+        return cents.times(bufferMargin).times(weiPerCent)
+    }
+
     before(function *() {
         services = yield Services.deployed();
         exchangeRate = yield ExchangeRate.deployed();
@@ -88,16 +94,37 @@ contract('BackedValueContract', function(accounts) {
         );
     });
 
-    // it("should allow beneficiary withdrawal", function* () {
-    //     // setup
-    //     var notionalCents = web3.toBigNumber('1000000');
-    //     // action
-    //     var bvc = yield BackedValueContract.new(
-    //         beneficiary, notionalCents, {from: emitter}
-    //     );
+    it("should allow beneficiary withdrawal", function* () {
+        var notionalCents = cents(10);
 
-    //     yield
+        var bvc = yield BackedValueContract.new(
+            beneficiary, notionalCents, {
+                value: minimumWeiForCents(notionalCents, weiPerCent),
+                from: emitter
+            }
+        );
+        console.log("deployed bvc");
+
+        var failed = false;
+        try {
+            yield bvc.withdraw(cents(11), {from: beneficiary});
+        } catch (e) {
+            failed = true;
+        }
+        assert.equal(failed, true);
+        console.log("post withdraw 1");
+
+        var remainingNotionalCents = yield bvc.notionalCents();
+        assert.equal(remainingNotionalCents.toString(), cents(10).toString());
+
+        yield bvc.withdraw(cents(9), {from: beneficiary});
+        console.log("post withdraw 2");
+        remainingNotionalCents = yield bvc.notionalCents();
+        assert.equal(remainingNotionalCents.toString(), cents(1).toString());
 
 
-    // });
+
+
+
+    });
 });
