@@ -29,40 +29,21 @@ contract BackedValueContract {
         ensureBackedValue
         payable
     {
-
         updateServices(_servicesAddress);
 
         emitter = _emitter;
         beneficiary = _beneficiary;
         notionalCents = _notionalCents;
-
-        // exchangeRate = ExchangeRate(_exchangeRateAddress);
     }
 
-    modifier ensureBackedValue() {
-        _;
-
-        // exchangeRate    wei / cent
-        // msg.value       wei
-        //
-        // maximum notional value:
-        // exchangeRate / msg.value / INITIAL_MARGIN_REQUIREMENT :: cents
-        //
-        uint providedWei = msg.value;
-        uint weiPerCent = exchangeRate.weiPerCent();
-
-        uint providedCents = providedWei / weiPerCent;
-
-        uint maximumNotionalCents = providedCents / INITIAL_MINIMUM_MARGIN_RATIO;
-
-        if (notionalCents > maximumNotionalCents) throw;
+    function () payable {
+        // emitter can pay into value in case of margin decrease
     }
 
-    function updateServices(address _servicesAddress) {
-        ServicesI services = ServicesI(_servicesAddress);
 
-        exchangeRate = ExchangeRate(services.EXCHANGE_RATE());
-    }
+    /*
+     * Constant Functions
+     */
 
     function allowedEmitterWithdrawal() constant returns (uint weiValue) {
         uint lockedValue = INITIAL_MINIMUM_MARGIN_RATIO
@@ -75,6 +56,11 @@ contract BackedValueContract {
     function allowedBeneficiaryWithdrawal() constant returns (uint centsValue) {
         return notionalCents;
     }
+
+
+    /*
+     * Withdrawal Logic
+     */
 
     function withdraw() onlyParticipants returns (bool) {
         // beneficiary may withdraw what they are owed
@@ -94,13 +80,13 @@ contract BackedValueContract {
 
     function withdraw(uint weiOrCents) onlyParticipants returns (bool) {
         if (msg.sender == emitter) {
-            withdrawWei(weiOrCents);
+            withdrawToEmitter(weiOrCents);
         } else if (msg.sender == beneficiary) {
-            withdrawCents(weiOrCents);
+            withdrawToBeneficiary(weiOrCents);
         }
     }
 
-    function withdrawCents(uint centsValue)
+    function withdrawToBeneficiary(uint centsValue)
         internal
         returns (bool)
     {
@@ -125,7 +111,7 @@ contract BackedValueContract {
         return (sentWei > 0);
     }
 
-    function withdrawWei(uint weiValue)
+    function withdrawToEmitter(uint weiValue)
         internal
         returns (bool)
     {
@@ -138,13 +124,43 @@ contract BackedValueContract {
         return (sentWei > 0);
     }
 
-  modifier onlyParticipants() {
-    if (msg.sender == emitter || msg.sender == beneficiary) _;
-  }
 
 
-  function () payable {
-    // emitter can pay into value in case of margin decrease
-  }
+    /*
+     * Modifiers
+     */
 
+    modifier ensureBackedValue() {
+        _;
+
+        // exchangeRate    wei / cent
+        // msg.value       wei
+        //
+        // maximum notional value:
+        // exchangeRate / msg.value / INITIAL_MARGIN_REQUIREMENT :: cents
+        //
+        uint providedWei = msg.value;
+        uint weiPerCent = exchangeRate.weiPerCent();
+
+        uint providedCents = providedWei / weiPerCent;
+
+        uint maximumNotionalCents = providedCents / INITIAL_MINIMUM_MARGIN_RATIO;
+
+        if (notionalCents > maximumNotionalCents) throw;
+    }
+
+    modifier onlyParticipants() {
+        if (msg.sender == emitter || msg.sender == beneficiary) _;
+    }
+
+
+    /*
+     * Service Resolution Helper
+     */
+
+    function updateServices(address _servicesAddress) internal {
+        ServicesI services = ServicesI(_servicesAddress);
+
+        exchangeRate = ExchangeRate(services.EXCHANGE_RATE());
+    }
 }
