@@ -19,6 +19,17 @@ contract BackedValueContract {
 
     State state = State.Pending;
 
+    event Pending();
+    event Active();
+
+    event Deposit(uint weiDeposited);
+    event BeneficiaryWithdrawal(
+        uint centsWithdrawn,
+        uint weiValue,
+        uint weiPerCent
+    );
+    event EmitterWithdrawal(uint weiWithdrawn);
+
     // balance of contract is value on chain
     uint public notionalCents;
     uint public pendingNotionalCents;
@@ -114,7 +125,8 @@ contract BackedValueContract {
         // 2. withdraw() calculates wei equivalent
         // 3. withdraw() sends wei to beneficiary
 
-        uint weiEquivalent = centsValue.safeMultiply(exchangeRate.weiPerCent());
+        uint weiPerCent = exchangeRate.weiPerCent();
+        uint weiEquivalent = centsValue.safeMultiply(weiPerCent);
 
         if (centsValue > allowedBeneficiaryWithdrawal()) {
             throw;
@@ -126,6 +138,7 @@ contract BackedValueContract {
         uint sentWei = beneficiary.safeSend(weiEquivalent);
         notionalCents = priorNotionalCents.flooredSub(centsValue);
 
+        BeneficiaryWithdrawal(centsValue, sentWei, weiPerCent);
         return (sentWei > 0);
     }
 
@@ -139,6 +152,7 @@ contract BackedValueContract {
 
         uint sentWei = emitter.safeSend(weiValue);
 
+        EmitterWithdrawal(sentWei);
         return (sentWei > 0);
     }
 
@@ -172,7 +186,10 @@ contract BackedValueContract {
             notionalCents = pendingNotionalCents;
             pendingNotionalCents = 0;
             state = State.Active;
+            return;
         }
+
+        Pending();
     }
 
     modifier onlyParticipants() {

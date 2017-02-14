@@ -20,8 +20,7 @@ contract("Factory", function(accounts) {
     before(function *() {
         exchangeRate = yield ExchangeRate.deployed();
 
-        yield exchangeRate.initFetch();
-        yield fetchEvent(exchangeRate.UpdateExchangeRate("latest"));
+        yield exchangeRate.receiveExchangeRate(cents(1000), {from: emitter});
 
         weiPerCent = yield exchangeRate.weiPerCent();
     });
@@ -38,7 +37,7 @@ contract("Factory", function(accounts) {
             {value: minimumWeiForCents(notionalCents), from: emitter}
         );
 
-        var log = yield fetchEvent(factory.NewBackedValueContract("latest"));
+        var log = yield fetchEvent(factory.NewBackedValueContract());
 
         var bvcAddress = log.args.contractAddress;
 

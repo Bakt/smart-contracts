@@ -21,10 +21,7 @@ contract('BackedValueContract', function(accounts) {
     before(function *() {
         services = yield Services.deployed();
         exchangeRate = yield ExchangeRate.deployed();
-
-        yield exchangeRate.initFetch();
-        yield fetchEvent(exchangeRate.UpdateExchangeRate("latest"));
-
+        yield exchangeRate.receiveExchangeRate(cents(1000), {from: emitter});
         weiPerCent = yield exchangeRate.weiPerCent();
     });
 

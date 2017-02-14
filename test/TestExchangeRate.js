@@ -5,7 +5,6 @@ var { fetchEvent } = require('./helpers');
 var ExchangeRate = artifacts.require('ExchangeRate.sol');
 
 contract('ExchangeRate', function(accounts) {
-    /* SKIP because oraclize-bridge is hanging; tested by TestBackedValueContract
     it("should allow triggering price fetch", function* () {
         let exchangeRate = yield ExchangeRate.deployed();
 
@@ -22,5 +21,4 @@ contract('ExchangeRate', function(accounts) {
         let log = yield fetchEvent(exchangeRate.UpdateExchangeRate("latest"));
         assert.equal(log.event, "UpdateExchangeRate");
     });
-    */
 });
