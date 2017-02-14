@@ -13,8 +13,15 @@ contract BackedValueContract {
     address public emitter;
     address public beneficiary;
 
+    enum State {
+        Pending, Active
+    }
+
+    State state = State.Pending;
+
     // balance of contract is value on chain
     uint public notionalCents;
+    uint public pendingNotionalCents;
 
     // withdrawal balances?
 
@@ -26,18 +33,19 @@ contract BackedValueContract {
                                  address _emitter,
                                  address _beneficiary,
                                  uint _notionalCents)
-        ensureBackedValue
+        checkMargin
         payable
     {
         updateServices(_servicesAddress);
 
         emitter = _emitter;
         beneficiary = _beneficiary;
-        notionalCents = _notionalCents;
+        pendingNotionalCents = _notionalCents;
     }
 
-    function () payable {
-        // emitter can pay into value in case of margin decrease
+    function () { }
+
+    function deposit() checkMargin payable {
     }
 
 
@@ -55,6 +63,16 @@ contract BackedValueContract {
 
     function allowedBeneficiaryWithdrawal() constant returns (uint centsValue) {
         return notionalCents;
+    }
+
+    function currentState() constant returns (string) {
+        if (state == State.Pending) {
+            return "pending";
+        } else if (state == State.Active) {
+            return "active";
+        } else {
+            return "";
+        }
     }
 
 
@@ -130,7 +148,7 @@ contract BackedValueContract {
      * Modifiers
      */
 
-    modifier ensureBackedValue() {
+    modifier checkMargin() {
         _;
 
         // exchangeRate    wei / cent
@@ -139,14 +157,22 @@ contract BackedValueContract {
         // maximum notional value:
         // exchangeRate / msg.value / INITIAL_MARGIN_REQUIREMENT :: cents
         //
-        uint providedWei = msg.value;
+        if (state == State.Active) {
+            return;
+        }
+
+        uint providedWei = this.balance;
         uint weiPerCent = exchangeRate.weiPerCent();
 
         uint providedCents = providedWei / weiPerCent;
 
         uint maximumNotionalCents = providedCents / INITIAL_MINIMUM_MARGIN_RATIO;
 
-        if (notionalCents > maximumNotionalCents) throw;
+        if (pendingNotionalCents > 0 && pendingNotionalCents <= maximumNotionalCents) {
+            notionalCents = pendingNotionalCents;
+            pendingNotionalCents = 0;
+            state = State.Active;
+        }
     }
 
     modifier onlyParticipants() {

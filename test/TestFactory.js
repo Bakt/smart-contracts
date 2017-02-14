@@ -2,21 +2,40 @@ require('mocha-generators').install();
 
 var { cents, fetchEvent } = require('./helpers');
 
+var ExchangeRate = artifacts.require("ExchangeRate.sol");
 var Factory = artifacts.require("Factory.sol");
 var BackedValueContract = artifacts.require("BackedValueContract");
 
 contract("Factory", function(accounts) {
     let emitter = accounts[0];
     let beneficiary = accounts[1];
+    var weiPerCent;
+
+    let minimumWeiForCents = function(notionalCents) {
+        let bufferMargin = 2.0;
+
+        return notionalCents.times(bufferMargin).times(weiPerCent)
+    }
+
+    before(function *() {
+        exchangeRate = yield ExchangeRate.deployed();
+
+        yield exchangeRate.initFetch();
+        yield fetchEvent(exchangeRate.UpdateExchangeRate("latest"));
+
+        weiPerCent = yield exchangeRate.weiPerCent();
+    });
+
 
     it("should deploy BackedValueContracts", function* () {
         // setup
-        var notionalCents = cents(0);
+        var notionalCents = cents(10);
         var factory = yield Factory.deployed();
 
         // action
         yield factory.createBackedValueContract(
-            beneficiary, notionalCents, {from: emitter}
+            beneficiary, notionalCents,
+            {value: minimumWeiForCents(notionalCents), from: emitter}
         );
 
         var log = yield fetchEvent(factory.NewBackedValueContract("latest"));

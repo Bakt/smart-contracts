@@ -60,22 +60,29 @@ contract('BackedValueContract', function(accounts) {
         let notionalCents = cents(10);
         let bvc;
         let bufferMargin;
+        let actualNotionalCents;
+        let actualPendingNotionalCents;
 
         // attempt to deploy without sending enough ether
         // ensure fails (somehow)
         bufferMargin = 1.9;
         var notEnoughWei = notionalCents.times(bufferMargin).times(weiPerCent);
 
-        var failed = false;
-        try {
-            bvc = yield BackedValueContract.new(
-                services.address, emitter, beneficiary, notionalCents,
-                {value: notEnoughWei, from: emitter}
-            );
-        } catch (e) {
-            failed = true;
-        }
-        assert.equal(failed, true);
+        bvc = yield BackedValueContract.new(
+            services.address, emitter, beneficiary, notionalCents,
+            {value: notEnoughWei, from: emitter}
+        );
+        actualPendingNotionalCents = yield bvc.pendingNotionalCents();
+        assert.equal(
+            actualPendingNotionalCents.toString(), notionalCents.toString(),
+            "pendingNotionalCents mismatch"
+        );
+
+        actualNotionalCents = yield bvc.notionalCents();
+        assert.equal(
+            actualNotionalCents.toString(), "0",
+            "notionalCents mismatch"
+        );
 
         // attempt to deploy AND send enough ether
         // ensure succeeds
@@ -87,11 +94,39 @@ contract('BackedValueContract', function(accounts) {
             {value: enoughWei, from: emitter}
         );
 
-        var actualNotionalCents = yield bvc.notionalCents();
+        actualNotionalCents = yield bvc.notionalCents();
         assert.equal(
             notionalCents.toString(), actualNotionalCents.toString(),
             "notionalCents mismatch"
         );
+        actualPendingNotionalCents = yield bvc.pendingNotionalCents();
+        assert.equal(
+            actualPendingNotionalCents.toString(), "0",
+            "pendingNotionalCents mismatch"
+        );
+    });
+
+    it("should enter active state upon enough wei being sent", function* () {
+        let notionalCents = cents(100);
+        let bvc;
+        let currentState;
+
+        // deploy without sending enough ether
+        var halfEnough = minimumWeiForCents(notionalCents).dividedToIntegerBy(2);
+
+        bvc = yield BackedValueContract.new(
+            services.address, emitter, beneficiary, notionalCents,
+            {value: halfEnough, from: emitter}
+        );
+        currentState = yield bvc.currentState();
+        assert.equal(currentState.toString(), "pending");
+
+        yield bvc.deposit(
+            {value: halfEnough.plus(1) /* rounding */, from: emitter}
+        );
+
+        currentState = yield bvc.currentState();
+        assert.equal(currentState.toString(), "active");
     });
 
     it("should prevent beneficiary withdrawal excessive of notional value", function* () {
@@ -106,7 +141,7 @@ contract('BackedValueContract', function(accounts) {
 
         var failed = false;
         try {
-            yield bvc.withdraw(cents(110), {from: beneficiary});
+            yield bvc.withdraw(cents(11), {from: beneficiary});
         } catch (e) {
             failed = true;
         }
@@ -134,7 +169,6 @@ contract('BackedValueContract', function(accounts) {
         yield bvc.withdraw(cents(1), {from: beneficiary});
         remainingNotionalCents = yield bvc.notionalCents();
         assert.equal(remainingNotionalCents.toString(), cents(0).toString());
-
     });
 
     it("should provide the correct wei equivalent to the beneficiary", function* () {
@@ -236,7 +270,6 @@ contract('BackedValueContract', function(accounts) {
             ")"
         );
 
-
         assert.equal(
             contractBalanceAfter.toString(), expectedContractBalance.toString(),
             "Contract balance after withdrawals should equal initial balance " +
@@ -249,4 +282,5 @@ contract('BackedValueContract', function(accounts) {
             ")"
         );
     });
+
 });
