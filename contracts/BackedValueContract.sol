@@ -64,7 +64,7 @@ contract BackedValueContract {
         exchangeRate = ExchangeRate(services.EXCHANGE_RATE());
     }
 
-    function allowedEmitterWithdrawal() internal returns (uint weiValue) {
+    function allowedEmitterWithdrawal() constant returns (uint weiValue) {
         uint lockedValue = INITIAL_MINIMUM_MARGIN_RATIO
             .safeMultiply(notionalCents)
             .safeMultiply(exchangeRate.weiPerCent());
@@ -72,7 +72,7 @@ contract BackedValueContract {
         return this.balance.flooredSub(lockedValue);
     }
 
-    function allowedBeneficiaryWithdrawal() internal returns (uint centsValue) {
+    function allowedBeneficiaryWithdrawal() constant returns (uint centsValue) {
         return notionalCents;
     }
 
@@ -125,13 +125,17 @@ contract BackedValueContract {
         return (sentWei > 0);
     }
 
-    function withdrawWei(uint weiValue) internal returns (bool) {
-        if (weiValue > 0 && weiValue <= allowedEmitterWithdrawal()) {
-            // re-entrance protection.
-            // emitter.safeSend(weiValue);
+    function withdrawWei(uint weiValue)
+        internal
+        returns (bool)
+    {
+        if (weiValue > allowedEmitterWithdrawal()) {
+            throw;
         }
 
-        return true;
+        uint sentWei = emitter.safeSend(weiValue);
+
+        return (sentWei > 0);
     }
 
   modifier onlyParticipants() {
