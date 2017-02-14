@@ -1,6 +1,6 @@
 require('mocha-generators').install();
 
-var { fetchEvent } = require('./helpers');
+var { cents, fetchEvent } = require('./helpers');
 
 var Factory = artifacts.require("Factory.sol");
 var BackedValueContract = artifacts.require("BackedValueContract");
@@ -11,7 +11,7 @@ contract("Factory", function(accounts) {
 
     it("should deploy BackedValueContracts", function* () {
         // setup
-        var notionalCents = web3.toBigNumber('1000000');
+        var notionalCents = cents(0);
         var factory = yield Factory.deployed();
 
         // action
