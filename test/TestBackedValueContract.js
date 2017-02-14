@@ -12,10 +12,10 @@ contract('BackedValueContract', function(accounts) {
     var services;
     var weiPerCent;
 
-    let minimumWeiForCents = function(cents, weiPerCent) {
-        let bufferMargin = 2.1;
+    let minimumWeiForCents = function(notionalCents, weiPerCent) {
+        let bufferMargin = 2.0;
 
-        return cents.times(bufferMargin).times(weiPerCent)
+        return notionalCents.times(bufferMargin).times(weiPerCent)
     }
 
     before(function *() {
@@ -94,37 +94,83 @@ contract('BackedValueContract', function(accounts) {
         );
     });
 
-    it("should allow beneficiary withdrawal", function* () {
-        var notionalCents = cents(10);
+    it("should prevent beneficiary withdrawal excessive of notional value", function* () {
+        let notionalCents = cents(10);
 
         var bvc = yield BackedValueContract.new(
-            beneficiary, notionalCents, {
+            services.address, emitter, beneficiary, notionalCents, {
                 value: minimumWeiForCents(notionalCents, weiPerCent),
                 from: emitter
             }
         );
-        console.log("deployed bvc");
 
         var failed = false;
         try {
-            yield bvc.withdraw(cents(11), {from: beneficiary});
+            yield bvc.withdraw(cents(110), {from: beneficiary});
         } catch (e) {
             failed = true;
         }
         assert.equal(failed, true);
-        console.log("post withdraw 1");
+    });
 
-        var remainingNotionalCents = yield bvc.notionalCents();
-        assert.equal(remainingNotionalCents.toString(), cents(10).toString());
+    it("should update notional value upon beneficiary withdrawal", function* () {
+        let notionalCents = cents(10);
 
-        yield bvc.withdraw(cents(9), {from: beneficiary});
-        console.log("post withdraw 2");
+        var bvc = yield BackedValueContract.new(
+            services.address, emitter, beneficiary, notionalCents, {
+                value: minimumWeiForCents(notionalCents, weiPerCent),
+                from: emitter
+            }
+        );
+
+        yield bvc.withdraw(cents(7), {from: beneficiary});
+        remainingNotionalCents = yield bvc.notionalCents();
+        assert.equal(remainingNotionalCents.toString(), cents(3).toString());
+
+        yield bvc.withdraw(cents(2), {from: beneficiary});
         remainingNotionalCents = yield bvc.notionalCents();
         assert.equal(remainingNotionalCents.toString(), cents(1).toString());
 
+        yield bvc.withdraw(cents(1), {from: beneficiary});
+        remainingNotionalCents = yield bvc.notionalCents();
+        assert.equal(remainingNotionalCents.toString(), cents(0).toString());
 
+    });
 
+    it("should provide the correct wei equivalent to the beneficiary", function* () {
+        let notionalCents = cents(100);
+        var bvc = yield BackedValueContract.new(
+            services.address, emitter, beneficiary, notionalCents, {
+                value: minimumWeiForCents(notionalCents, weiPerCent),
+                from: emitter
+            }
+        );
 
+        let withdrawAmount = cents(50);
+        let weiEquivalent = withdrawAmount.times(weiPerCent);
 
+        let initialBalance = web3.eth.getBalance(beneficiary);
+
+        let result = yield bvc.withdraw(withdrawAmount, {from: beneficiary});
+        let gasUsed = web3.toBigNumber(result.receipt.gasUsed);
+        let gasCost = gasUsed.times(web3.eth.getTransaction(result.tx).gasPrice);
+
+        let expectedBalanceAfter = initialBalance.plus(weiEquivalent).minus(gasCost);
+
+        let balanceAfter = web3.eth.getBalance(beneficiary);
+
+        assert.equal(
+            balanceAfter.toString(), expectedBalanceAfter.toString(),
+            "Balance after withdrawals should equal initial balance " +
+            "plus withdrawn value minus gas costs (" +
+                web3.fromWei(balanceAfter, "ether").toString() +
+                " != " +
+                web3.fromWei(initialBalance, "ether").toString() +
+                " + " +
+                web3.fromWei(weiEquivalent, "ether").toString() +
+                " - " +
+                web3.fromWei(gasCost, "ether").toString() +
+            ")"
+        );
     });
 });

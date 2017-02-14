@@ -7,6 +7,9 @@ import "./ExchangeRate.sol";
 import "./ServicesI.sol";
 
 contract BackedValueContract {
+    using MathLib for uint;
+    using SafeSendLib for address;
+
     address public emitter;
     address public beneficiary;
 
@@ -61,38 +64,12 @@ contract BackedValueContract {
         exchangeRate = ExchangeRate(services.EXCHANGE_RATE());
     }
 
-    /*
-     * Multiplies a by b in a manner that throws an exception when overflow
-     * conditions are met.
-     */
-    function safeMultiply(uint a, uint b) internal returns (uint) {
-        var result = a * b;
-        if (b == 0 || result / b == a) {
-            return a * b;
-        } else {
-            throw;
-        }
-    }
-
-    /*
-     * Subtracts b from a in a manner such that zero is returned when an
-     * underflow condition is met.
-     */
-    function flooredSub(uint a, uint b) returns (uint) {
-        if (b >= a) {
-            return 0;
-        } else {
-            return a - b;
-        }
-    }
-
     function allowedEmitterWithdrawal() internal returns (uint weiValue) {
-        uint lockedValue = safeMultiply(
-            INITIAL_MINIMUM_MARGIN_RATIO, safeMultiply(
-                notionalCents, exchangeRate.weiPerCent()
-        ));
+        uint lockedValue = INITIAL_MINIMUM_MARGIN_RATIO
+            .safeMultiply(notionalCents)
+            .safeMultiply(exchangeRate.weiPerCent());
 
-        return flooredSub(this.balance, lockedValue);
+        return this.balance.flooredSub(lockedValue);
     }
 
     function allowedBeneficiaryWithdrawal() internal returns (uint centsValue) {
@@ -123,27 +100,29 @@ contract BackedValueContract {
         }
     }
 
-    function withdrawCents(uint centsValue) internal returns (bool) {
+    function withdrawCents(uint centsValue)
+        internal
+        returns (bool)
+    {
         // withdraw behavior:
         // 0. beneficiary asks for cents
         // 1. withdraw() asserts requested cents <= notionalValue
         // 2. withdraw() calculates wei equivalent
         // 3. withdraw() sends wei to beneficiary
 
-        uint weiEquivalent = safeMultiply(centsValue, exchangeRate.weiPerCent());
+        uint weiEquivalent = centsValue.safeMultiply(exchangeRate.weiPerCent());
 
-        if (centsValue > 0 && centsValue <= allowedBeneficiaryWithdrawal()) {
-            // re-entrance protection.
-            notionalCents = 0;
-            if (beneficiary.send(weiEquivalent)) {
-                notionalCents = flooredSub(
-                    notionalCents, weiEquivalent
-                );
-                return true;
-            } else {
-                throw;
-            }
+        if (centsValue > allowedBeneficiaryWithdrawal()) {
+            throw;
         }
+
+        // re-entrance protection.
+        uint priorNotionalCents = notionalCents;
+        notionalCents = 0;
+        uint sentWei = beneficiary.safeSend(weiEquivalent);
+        notionalCents = priorNotionalCents.flooredSub(centsValue);
+
+        return (sentWei > 0);
     }
 
     function withdrawWei(uint weiValue) internal returns (bool) {
@@ -154,7 +133,6 @@ contract BackedValueContract {
 
         return true;
     }
-
 
   modifier onlyParticipants() {
     if (msg.sender == emitter || msg.sender == beneficiary) _;
