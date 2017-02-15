@@ -186,6 +186,7 @@ contract BackedValueContract {
             notionalCents = pendingNotionalCents;
             pendingNotionalCents = 0;
             state = State.Active;
+            Active();
             return;
         }
 
