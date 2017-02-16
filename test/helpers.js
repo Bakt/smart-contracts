@@ -10,6 +10,10 @@ function fetchEvent(events) {
     });
 }
 
+function cents(c) {
+    return web3.toBigNumber(c);
+}
+
 module.exports = {
-    fetchEvent
+    fetchEvent, cents
 };

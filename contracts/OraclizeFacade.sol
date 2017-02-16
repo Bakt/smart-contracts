@@ -12,9 +12,8 @@ contract OraclizeFacade is usingOraclize {
 
     function __callback(bytes32 id, string result, bytes proof) {
         if (msg.sender != oraclize_cbAddress()) throw;
-        uint parsedResult = parseInt(result, 3) * 1000000000000000; //note, 1000000000000000 is (1 ether)/10^3
-        if (parsedResult<=0) throw;
-        cb.receiveExchangeRate(parsedResult);
+        uint centsPerEth = parseInt(result, 2);
+        cb.receiveExchangeRate(centsPerEth);
     }
 
     function query(string datasource,

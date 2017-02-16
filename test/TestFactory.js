@@ -1,26 +1,43 @@
 require('mocha-generators').install();
 
-var { fetchEvent } = require('./helpers');
+var { cents, fetchEvent } = require('./helpers');
 
+var ExchangeRate = artifacts.require("ExchangeRate.sol");
 var Factory = artifacts.require("Factory.sol");
 var BackedValueContract = artifacts.require("BackedValueContract");
 
 contract("Factory", function(accounts) {
     let emitter = accounts[0];
     let beneficiary = accounts[1];
+    var weiPerCent;
+
+    let minimumWeiForCents = function(notionalCents) {
+        let bufferMargin = 2.0;
+
+        return notionalCents.times(bufferMargin).times(weiPerCent)
+    }
+
+    before(function *() {
+        exchangeRate = yield ExchangeRate.deployed();
+
+        yield exchangeRate.receiveExchangeRate(cents(1000), {from: emitter});
+
+        weiPerCent = yield exchangeRate.weiPerCent();
+    });
+
 
     it("should deploy BackedValueContracts", function* () {
         // setup
-        var notionalValue = web3.toBigNumber('1000000');
+        var notionalCents = cents(10);
         var factory = yield Factory.deployed();
 
         // action
         yield factory.createBackedValueContract(
-            beneficiary, notionalValue, {from: emitter}
+            beneficiary, notionalCents,
+            {value: minimumWeiForCents(notionalCents), from: emitter}
         );
 
-        var log = yield fetchEvent(factory.NewBackedValueContract("latest"));
-        console.log(log);
+        var log = yield fetchEvent(factory.NewBackedValueContract());
 
         var bvcAddress = log.args.contractAddress;
 
@@ -29,7 +46,7 @@ contract("Factory", function(accounts) {
 
         var actualBeneficiary = yield bvc.beneficiary();
         var actualEmitter = yield bvc.emitter();
-        var actualNotionalValue = yield bvc.notionalValue();
+        var actualNotionalValue = yield bvc.notionalCents();
 
         assert.equal(
             beneficiary.toString(), actualBeneficiary.toString(),
@@ -40,8 +57,8 @@ contract("Factory", function(accounts) {
             "emitter mismatch"
         );
         assert.equal(
-            notionalValue.toString(), actualNotionalValue.toString(),
-            "notionalValue mismatch"
+            notionalCents.toString(), actualNotionalValue.toString(),
+            "notionalCents mismatch"
         );
 
     });

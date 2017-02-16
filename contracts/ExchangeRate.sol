@@ -5,14 +5,16 @@ import "./ExchangeRateCallbackI.sol";
 import "./ServicesI.sol";
 
 contract ExchangeRate {
-    uint public exchangeRate;
+    uint public weiPerCent;
     uint public lastBlock;
+
+    uint public centsPerEth;
 
     OraclizeFacade oraclize;
     ExchangeRateCallbackI receiver;
 
     // TODO exchange rate should probably start "stale" and go stale after a time (for safety)
-    event UpdateExchangeRate(uint exchangeRate);
+    event UpdateExchangeRate(uint weiPerCent);
     event FetchExchangeRate();
 
     function ExchangeRate(address _servicesAddress) {
@@ -28,11 +30,27 @@ contract ExchangeRate {
         receiver = ExchangeRateCallbackI(services);
     }
 
-    function receiveExchangeRate(uint exchangeRate) {
-        lastBlock = block.number;
-        UpdateExchangeRate(exchangeRate);
+    function receiveExchangeRate(uint _centsPerEth) {
+        //  wei/eth = 10**18
+        //
+        //  cents       wei         cents   eth
+        //  -------  /  ------  ==  ----- * ---
+        //  eth         eth         eth     wei
+        //
+        //  wei      cents      wei   eth       wei
+        //  ---   /  -----  ==  --- * ---    == ---
+        //  eth      eth        eth   cents     cents
 
-        receiver.receiveExchangeRate(exchangeRate);
+        uint _weiPerEth = 10**18;
+        uint _weiPerCent = _weiPerEth / _centsPerEth;
+
+        centsPerEth = _centsPerEth;
+        weiPerCent = _weiPerCent;
+        lastBlock = block.number;
+
+        UpdateExchangeRate(_weiPerCent);
+
+        receiver.receiveExchangeRate(_centsPerEth);
     }
 
     function initFetch() {

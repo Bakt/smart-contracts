@@ -1,88 +1,210 @@
 pragma solidity ^0.4.7;
 
+import "./vendor/MathLib.sol";
+import "./vendor/SafeSendLib.sol";
+
 import "./ExchangeRate.sol";
+import "./ServicesI.sol";
 
 contract BackedValueContract {
-  address public emitter;
-  address public beneficiary;
+    using MathLib for uint;
+    using SafeSendLib for address;
 
-  // balance of contract is value on chain
-  uint public notionalValue;
+    address public emitter;
+    address public beneficiary;
 
-  // withdrawal balances?
-
-  ExchangeRate exchangeRate;
-
-  uint public constant warningThreshold = 0.1 ether * notionalValue;
-
-  enum State {
-    Solvent,
-    Warning,
-    Insolvent
-  }
-
-  event NowSolvent(uint solvency);
-  event NowWarning(uint solvency);
-  event NowInsolvent();
-
-  State public solvencyState;
-
-  function BackedValueContract(address _emitter,
-                               address _beneficiary,
-                               uint _notionalValue
-                               /*address _exchangeRateAddress*/) {
-    emitter = _emitter;
-    beneficiary = _beneficiary;
-    notionalValue = _notionalValue;
-
-    // exchangeRate = ExchangeRate(_exchangeRateAddress);
-  }
-
-  modifier onlyParticipants() {
-    if (msg.sender == emitter || msg.sender == beneficiary) _;
-  }
-
-  function getSolvency() constant returns (uint) {
-    return this.balance - (notionalValue / exchangeRate.exchangeRate());
-  }
-
-  function getCurrentState() constant internal returns (State) {
-    var excess = getSolvency();
-    if (excess > warningThreshold) {
-      return State.Solvent;
-    } else if (excess > 0) {
-      return State.Warning;
-    } else {
-      return State.Insolvent;
+    enum State {
+        Pending, Active
     }
-  }
 
-  function onStateChange() /*onlyOnChangedState*/ internal {
-    var enteredState = getCurrentState();
-    var solvency = getSolvency();
+    State state = State.Pending;
 
-    if (enteredState == State.Solvent) {
-      NowSolvent(solvency);
-      // onEnterSolvent()
-    } else if (enteredState == State.Warning) {
-      NowWarning(solvency);
-      // onEnterWarning();
-    } else if (enteredState == State.Insolvent) {
-      NowInsolvent();
-      onEnterInsolvent();
+    event Pending();
+    event Active();
+
+    event Deposit(uint weiDeposited);
+    event BeneficiaryWithdrawal(
+        uint centsWithdrawn,
+        uint weiValue,
+        uint weiPerCent
+    );
+    event EmitterWithdrawal(uint weiWithdrawn);
+
+    // balance of contract is value on chain
+    uint public notionalCents;
+    uint public pendingNotionalCents;
+
+    // withdrawal balances?
+
+    ExchangeRate exchangeRate;
+
+    uint INITIAL_MINIMUM_MARGIN_RATIO = 2;
+
+    function BackedValueContract(address _servicesAddress,
+                                 address _emitter,
+                                 address _beneficiary,
+                                 uint _notionalCents)
+        checkMargin
+        payable
+    {
+        updateServices(_servicesAddress);
+
+        emitter = _emitter;
+        beneficiary = _beneficiary;
+        pendingNotionalCents = _notionalCents;
     }
-  }
 
-  function onEnterInsolvent() internal {
-  }
+    function () { }
 
-  function withdraw() onlyParticipants(){
-    // beneficiary may withdraw what they are owed
-    // emitter may withdraw any amount in excess of that
-  }
+    function deposit() checkMargin payable {
+    }
 
-  function () payable {
-    // emitter can pay into value in case of margin decrease
-  }
 
+    /*
+     * Constant Functions
+     */
+
+    function allowedEmitterWithdrawal() constant returns (uint weiValue) {
+        uint lockedValue = INITIAL_MINIMUM_MARGIN_RATIO
+            .safeMultiply(notionalCents)
+            .safeMultiply(exchangeRate.weiPerCent());
+
+        return this.balance.flooredSub(lockedValue);
+    }
+
+    function allowedBeneficiaryWithdrawal() constant returns (uint centsValue) {
+        return notionalCents;
+    }
+
+    function currentState() constant returns (string) {
+        if (state == State.Pending) {
+            return "pending";
+        } else if (state == State.Active) {
+            return "active";
+        } else {
+            return "";
+        }
+    }
+
+
+    /*
+     * Withdrawal Logic
+     */
+
+    function withdraw() onlyParticipants returns (bool) {
+        // beneficiary may withdraw what they are owed
+          // when beneficiary withdraws, set notionalCents = 0
+        // emitter may withdraw any amount in excess of that
+
+        uint weiWithdrawal;
+        uint centsWithdrawal;
+        if (msg.sender == emitter) {
+            weiWithdrawal = allowedEmitterWithdrawal();
+            return withdraw(weiWithdrawal);
+        } else if (msg.sender == beneficiary) {
+            centsWithdrawal = allowedBeneficiaryWithdrawal();
+            return withdraw(centsWithdrawal);
+        }
+    }
+
+    function withdraw(uint weiOrCents) onlyParticipants returns (bool) {
+        if (msg.sender == emitter) {
+            withdrawToEmitter(weiOrCents);
+        } else if (msg.sender == beneficiary) {
+            withdrawToBeneficiary(weiOrCents);
+        }
+    }
+
+    function withdrawToBeneficiary(uint centsValue)
+        internal
+        returns (bool)
+    {
+        // withdraw behavior:
+        // 0. beneficiary asks for cents
+        // 1. withdraw() asserts requested cents <= notionalValue
+        // 2. withdraw() calculates wei equivalent
+        // 3. withdraw() sends wei to beneficiary
+
+        uint weiPerCent = exchangeRate.weiPerCent();
+        uint weiEquivalent = centsValue.safeMultiply(weiPerCent);
+
+        if (centsValue > allowedBeneficiaryWithdrawal()) {
+            throw;
+        }
+
+        // re-entrance protection.
+        uint priorNotionalCents = notionalCents;
+        notionalCents = 0;
+        uint sentWei = beneficiary.safeSend(weiEquivalent);
+        notionalCents = priorNotionalCents.flooredSub(centsValue);
+
+        BeneficiaryWithdrawal(centsValue, sentWei, weiPerCent);
+        return (sentWei > 0);
+    }
+
+    function withdrawToEmitter(uint weiValue)
+        internal
+        returns (bool)
+    {
+        if (weiValue > allowedEmitterWithdrawal()) {
+            throw;
+        }
+
+        uint sentWei = emitter.safeSend(weiValue);
+
+        EmitterWithdrawal(sentWei);
+        return (sentWei > 0);
+    }
+
+
+
+    /*
+     * Modifiers
+     */
+
+    modifier checkMargin() {
+        _;
+
+        // exchangeRate    wei / cent
+        // msg.value       wei
+        //
+        // maximum notional value:
+        // exchangeRate / msg.value / INITIAL_MARGIN_REQUIREMENT :: cents
+        //
+        if (state == State.Active) {
+            return;
+        }
+
+        uint providedWei = this.balance;
+        uint weiPerCent = exchangeRate.weiPerCent();
+
+        uint providedCents = providedWei / weiPerCent;
+
+        uint maximumNotionalCents = providedCents / INITIAL_MINIMUM_MARGIN_RATIO;
+
+        if (pendingNotionalCents > 0 && pendingNotionalCents <= maximumNotionalCents) {
+            notionalCents = pendingNotionalCents;
+            pendingNotionalCents = 0;
+            state = State.Active;
+            Active();
+            return;
+        }
+
+        Pending();
+    }
+
+    modifier onlyParticipants() {
+        if (msg.sender == emitter || msg.sender == beneficiary) _;
+    }
+
+
+    /*
+     * Service Resolution Helper
+     */
+
+    function updateServices(address _servicesAddress) internal {
+        ServicesI services = ServicesI(_servicesAddress);
+
+        exchangeRate = ExchangeRate(services.EXCHANGE_RATE());
+    }
 }
