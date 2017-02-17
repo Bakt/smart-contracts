@@ -1,0 +1,65 @@
+@startuml
+
+actor Emitter
+actor Beneficiary
+control "EVM Events" as Events
+
+Emitter -> DollarToken : **emit (beneficiary, //<font color=green>d//)**\n    **[**//send//** <font color=darkturquoise>//E// wei</font>]**
+activate Emitter
+deactivate Emitter
+
+create participant "Backed Value Contract" as BVC
+participant ExchangeRate
+participant Services
+participant DollarToken
+
+activate DollarToken
+
+  DollarToken -> BVC : **new (emitter, beneficiary, //<font color=green>d//, servicesAddress)**
+  activate BVC
+    BVC -> Services : ** GET** ExchangeRate
+    activate Services
+      Services --> BVC : ExchangeRate address
+    deactivate Services
+    BVC -> BVC : **STORE** ExchangeRate reference\n**STORE** emitter\n**STORE** beneficiary\n**STORE** pending notional cents **//<font color=green>d</font> = <font color=green>D//**\n**STORE** notional cents **//<font color=green>D</font> = 0//**\n**STORE** state = **//pending//**
+
+    BVC ->> Events : **//Pending()//**
+    BVC --> DollarToken : \tnew contract address
+  deactivate BVC
+
+
+  DollarToken -> BVC : **deposit (emitter, beneficiary, //<font color=green>d//, servicesAddress)**\n    **[**//send//** <font color=darkturquoise>//E// wei</font>]**
+  activate BVC
+  group assert state = **//pending//**
+
+    BVC -> ExchangeRate : ** GET** weiPerCent
+    activate ExchangeRate
+      ExchangeRate --> BVC : weiPerCent
+    deactivate ExchangeRate
+
+    BVC -> BVC : compute max allowed cents **//<font color=green>D′//** for balance **//<font color=darkturquoise>E//**
+    alt //insufficient funds// (//<font color=green>D′// < //<font color=green>d//)
+      BVC ->> Events : **//Pending()//**
+    else //succes//s
+      BVC -> BVC : **STORE** pending notional cents **//<font color=green>d</font> = 0//**\n**STORE** notional cents **//<font color=green>D</font> = <font color=green>d//**\n**STORE** state = **//active//**
+
+      BVC -[#green]> Beneficiary : issue token [**//D// cents**]
+      BVC -[#darkcyan]> Emitter : issue right to withdraw [**//E - 2*E<sub>D</sub> wei//**]\n\t//(computed at withdrawal time)//
+
+      note right
+      //Contract **STORE**s withdrawal permissions;//
+      //arrows indicate ownership transfer.//
+      end note
+
+      BVC ->> Events : **//Active()//**
+    end
+    |||
+
+  end
+  BVC --> DollarToken
+  deactivate BVC
+
+  DollarToken -->> Events : **//Emit(address, emitter, beneficiary, notionalCents)//**
+deactivate DollarToken
+
+@enduml
