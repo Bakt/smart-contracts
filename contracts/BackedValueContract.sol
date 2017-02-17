@@ -86,6 +86,19 @@ contract BackedValueContract {
         }
     }
 
+    function currentMargin() constant returns (uint) {
+        // 1 * 10**18 = 100% margin on notional value
+
+        uint divisionDecimals = 2;
+        uint margin = (
+            this.balance.safeMultiply(10**divisionDecimals) /
+                notionalCents.safeMultiply(exchangeRate.weiPerCent())
+            - 10**divisionDecimals
+        );
+
+        return margin.safeMultiply(10 ** (18-divisionDecimals));
+    }
+
 
     /*
      * Withdrawal Logic

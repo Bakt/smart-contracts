@@ -280,4 +280,35 @@ contract('BackedValueContract', function(accounts) {
         );
     });
 
+    it("reports margin", function* () {
+        let notionalCents = cents(100);
+        let fullMargin = web3.toBigNumber(web3.toWei('0.2', 'ether')); /* 2x, or 100% margin */
+
+        var bvc = yield BackedValueContract.new(
+            services.address, emitter, beneficiary, notionalCents,
+            {value: fullMargin, from: emitter}
+        );
+
+        let actualMargin = yield bvc.currentMargin();
+        let expectedMargin = web3.toBigNumber(web3.toWei('1', 'ether'));
+
+        assert.equal(
+            actualMargin.toString(), expectedMargin.toString()
+        ); /* to represent 1.0 */
+
+        let halfAgain = web3.toBigNumber(web3.toWei('0.25', 'ether')); /* 2x, or 100% margin */
+
+        bvc = yield BackedValueContract.new(
+            services.address, emitter, beneficiary, notionalCents,
+            {value: halfAgain, from: emitter}
+        );
+
+        actualMargin = yield bvc.currentMargin();
+        expectedMargin = web3.toBigNumber(web3.toWei('1.5', 'ether'));
+
+        assert.equal(
+            actualMargin.toString(), expectedMargin.toString()
+        );
+    });
+
 });
