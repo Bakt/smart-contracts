@@ -1,0 +1,34 @@
+@startuml
+
+actor Emitter
+actor Beneficiary
+
+
+note right of Beneficiary
+
+__**Legend**__
+
+**[<font color=darkturquoise>//value//</font>]** :: ETH sent in transaction
+
+**<font color=darkred size=26>←</font>** :: Transaction on EVM
+
+
+**<font color=green size=26>←</font>** :: transfer of //withdrawal rights//, notional cents
+          (storage update, no transaction)
+
+**<font color=darkcyan size=26>←</font>** :: transfer of //withdrawal rights//, ETH
+          (storage update, no transaction)
+end note
+
+
+Emitter -> DollarToken : establish contract **[<font color=darkturquoise>//E// wei</font>]**
+create control BackedValueContract
+
+DollarToken -> BackedValueContract : new **[<font color=darkturquoise>//E// wei</font>]**
+participant DollarToken
+
+
+BackedValueContract -[#green]> Beneficiary : issue token [**//D// cents**]
+BackedValueContract -[#darkcyan]> Emitter : issue right to withdraw [**//E - 2*E<sub>D</sub> wei//**]
+
+@enduml
