@@ -10,18 +10,18 @@ Run <C:\Program Files\Ethcore\Parity>parity.exe --testnet --warp in terminal.
 
 After snapshots are completed downloading open the browser: http://localhost:8080
 
-1. Manually create new accounts called Beneficiary and Emitter using “New Account”.
+Manually create new accounts called Beneficiary and Emitter using “New Account”.
 
 ![](https://i.imgur.com/ISZz1qF.png)
 
-2. Visit http://faucet.ropsten.be:3001 to send 1 test ether to each account.
+Visit http://faucet.ropsten.be:3001 to send 1 test ether to each account.
 
-3. Go to “Settings” and add Contracts to the menu by selecting it.
+Go to “Settings” and add Contracts to the menu by selecting it.
 
 ![](https://i.imgur.com/NRIFISt.png)
 
 Then navigate to the “Contracts” tab and click “Watch Contract”, “Custom Contract”.
-4. Firstly copy the Exchange Rate address and abi into the below form using this link.
+Firstly copy the Exchange Rate address and abi into the below form using this link.
 https://gist.github.com/gnidan/a553a16bb2bb931ec2b840d66ecf6df0 
 
 ![](https://i.imgur.com/nZpEiSE.png)
