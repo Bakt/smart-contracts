@@ -1,5 +1,7 @@
 @startuml
 
+!define SSTORE **STORE**
+
 actor Emitter
 actor Beneficiary
 control "EVM Events" as Events
@@ -21,7 +23,7 @@ activate DollarToken
     activate Services
       Services --> BVC : ExchangeRate address
     deactivate Services
-    BVC -> BVC : **STORE** ExchangeRate reference\n**STORE** emitter\n**STORE** beneficiary\n**STORE** pending notional cents **//<font color=green>d</font> = <font color=green>D//**\n**STORE** notional cents **//<font color=green>D</font> = 0//**\n**STORE** state = **//pending//**
+    BVC -> BVC : SSTORE ExchangeRate reference\n**STORE** emitter\n**STORE** beneficiary\n**STORE** pending notional cents **//<font color=green>d</font> = <font color=green>D//**\n**STORE** notional cents **//<font color=green>D</font> = 0//**\n**STORE** state = **//pending//**
 
     BVC ->> Events : **//Pending()//**
     BVC --> DollarToken : \tnew contract address
