@@ -60,10 +60,10 @@ Click into the BVC Contract to find the details of the agreement between the ben
 
 ![](https://i.imgur.com/xoOQYH6.png)
 
-/*allowedBeneficiaryWithdrawl*/
+/* allowedBeneficiaryWithdrawl */
 This is notional value in cents.
 
-/*allowedEmitterWithdrawl*/
+/* allowedEmitterWithdrawl */
 Assuming $10 ETH.
 100 notional cents must be covered by 0.2 ETH (200 cents)
 Using a Margin Ratio of 1 (100% margin value)
@@ -80,14 +80,14 @@ currentMargin = 4.0
 Because 0.5ETH in contract ($5.00) - 1 (100% margin value)
 1 = Margin Ratio representative of (i.e $2 to cover $1)
 
-/*currentState*/
+/* currentState */
 Either "Active" or "Pending".
 Pending: Requires more ETH from the Emitter to initiate the contract.
 Active: Contract is operational.
 
-/*notionalCents*/ 
+/* notionalCents */ 
 Publically displays value of USD that beneficiary is entitled to.
 
-/*pendingNotionalCents*/  If not enough ETH is sent to cover the notionalCents value.
+/* pendingNotionalCents */  If not enough ETH is sent to cover the notionalCents value.
 It temporarily stores the notionalCents value until enough ETH is sent.
 
