@@ -103,6 +103,7 @@ Publically displays value of USD that beneficiary is entitled to.
 /* pendingNotionalCents */  
 
 If not enough ETH is sent to cover the notionalCents value.
+
 It temporarily stores the notionalCents value until enough ETH is sent.
 
 Below you can see how it is possible for both the emitter and the beneficiary to withdraw either cents(dollars) or wei(ether) accordingly.
