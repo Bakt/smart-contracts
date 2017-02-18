@@ -27,6 +27,7 @@ https://gist.github.com/gnidan/a553a16bb2bb931ec2b840d66ecf6df0
 ![](https://i.imgur.com/nZpEiSE.png)
 
 Click into the ExchangeRateContract and call the initFetch() function to retrieve the pricefeed via Oracalize. 
+
 This will give the latest price from Etherscan.io 
 
 ![](https://i.imgur.com/bSHFS9k.png)
