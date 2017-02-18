@@ -66,6 +66,7 @@ Click into the BVC Contract to find the details of the agreement between the ben
 ![](https://i.imgur.com/xoOQYH6.png)
 
 /* allowedBeneficiaryWithdrawl */
+
 This is notional value in cents.
 
 /* allowedEmitterWithdrawl */
@@ -95,9 +96,11 @@ Pending: Requires more ETH from the Emitter to initiate the contract.
 Active: Contract is operational.
 
 /* notionalCents */ 
+
 Publically displays value of USD that beneficiary is entitled to.
 
 /* pendingNotionalCents */  
+
 If not enough ETH is sent to cover the notionalCents value.
 It temporarily stores the notionalCents value until enough ETH is sent.
 
