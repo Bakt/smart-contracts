@@ -1,7 +1,6 @@
 Documentation // Ethereum Dollar Token                             
 authors: felix@veon.industries | nick@veon.industries
 
-Architecture Diagram
 ![](https://i.imgur.com/JFUDrMe.png)
 
 Download parity (against Ropsten) for live testing. 
@@ -113,6 +112,7 @@ And from the perspective of the Emitter:
 ![](https://i.imgur.com/kyDpdba.png)
 
 Note: We have two seperate functions for withdrawls. One that allows only the full amount to be withdrawn at one time.
+
 The other allowing for partial withdrawls to be made possible if necessary.
 
 The entire tx history of this contract can be viewed at:
