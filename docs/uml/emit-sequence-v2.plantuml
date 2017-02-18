@@ -1,0 +1,119 @@
+@startuml
+
+!define _STORE(x) \n**STORE** x
+!define _STORESET(x,y) \n**STORE** x = **y**
+!define _STORESETMSG(m,x,y) \n**STORE** m x = y
+
+!define _CALL(name,args) **name** **(**args**)**
+!define _CALLSEND(name,args,value) _CALL(name,args)\n    **[**//send// value**]**
+!define _GET(x) ** GET** x
+
+!define _DOLLARS(amount) <font color=green>**//amount//**</font>
+!define _ETH(amount) <font color=darkturquoise>**//amount//**</font>
+
+!define _EVENT(name,args) **//name (//**args**//)//**
+
+
+actor Emitter
+actor Beneficiary
+participant DollarToken
+
+
+Emitter -> DollarToken : _CALLSEND(emitBackingValue,,_ETH(E))
+activate DollarToken
+  DollarToken -> Queue : _CALL(addBeneficiary,)
+  activate Queue
+    Queue --> DollarToken : ok
+  deactivate Queue
+  DollarToken -[#darkcyan]> Emitter : issue right to withdraw _ETH(E)
+deactivate DollarToken
+
+
+...
+
+
+Beneficiary -> DollarToken : _CALLSEND(requestDollars,"_DOLLARS(D)",V)
+activate DollarToken
+  DollarToken -> Queue : _CALL(addEmitter,)
+  activate Queue
+    Queue --> DollarToken : ok
+  deactivate Queue
+  DollarToken -[#darkcyan]> Beneficiary : issue right to withdraw V
+deactivate DollarToken
+
+
+...
+
+
+Queue -> DollarToken : match found
+activate DollarToken
+
+participant Queue
+participant ExchangeRate
+participant Services
+
+
+
+Emitter x<[#darkcyan]- DollarToken : de-issue right to withdraw _ETH(E)
+Beneficiary x<[#darkcyan]- DollarToken : de-issue right to withdraw V
+
+
+create participant "Backed Value Contract" as BVC
+control "EVM Events" as Events
+
+DollarToken -> BVC : _CALL(new,"emitter, beneficiary, _DOLLARS(d), servicesAddress")
+  activate BVC
+    BVC -> Services : _GET(ExchangeRate)
+    activate Services
+      Services --> BVC : ExchangeRate address
+    deactivate Services
+
+    BVC -> BVC : _STORE(ExchangeRate reference)\
+                 _STORE(emitter)\
+                 _STORE(beneficiary)\
+                 _STORESETMSG(pending notional cents,_DOLLARS(d),_DOLLARS(D))\
+                 _STORESETMSG(notional cents,_DOLLARS(D),_DOLLARS(0))\
+                 _STORESET(state,pending)
+
+    BVC ->> Events : _EVENT(Pending,)
+    BVC --> DollarToken : \tnew contract address
+  deactivate BVC
+
+
+  DollarToken -> BVC : _CALLSEND(deposit, "", _ETH(E wei))
+  activate BVC
+  group assert state = pending
+
+    BVC -> ExchangeRate : _GET(weiPerCent)
+    activate ExchangeRate
+      ExchangeRate --> BVC : weiPerCent
+    deactivate ExchangeRate
+
+    BVC -> BVC : compute max allowed cents _DOLLARS(D′) for balance _ETH(E)
+    alt //insufficient funds// ( _DOLLARS(D′) < _DOLLARS(d) )
+      BVC ->> Events : _EVENT(Pending,)
+    else //success//
+      BVC -> BVC : _STORESETMSG(pending notional cents, _DOLLARS(d), _DOLLARS(0))\
+                   _STORESETMSG(notional cents, _DOLLARS(D), _DOLLARS(d))\
+                   _STORESET(state,active)
+
+      BVC -[#green]> Beneficiary : issue token for _DOLLARS(D) cents
+      BVC -[#darkcyan]> Emitter : issue right to withdraw _ETH(E - 2*E<sub>D</sub>) wei
+
+      note right
+      //Contract **STORE**s withdrawal permissions;//
+      //arrows indicate ownership transfer.//
+      end note
+
+      BVC ->> Events :  _EVENT(Active,)
+    end
+    |||
+
+  end
+  BVC --> DollarToken
+  deactivate BVC
+
+  DollarToken ->> Events : _EVENT(Emit,"address, emitter, beneficiary, notionalCents")
+deactivate DollarToken
+
+@enduml
