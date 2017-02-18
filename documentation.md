@@ -43,9 +43,9 @@ Next, repeat same “Watch Contract” steps for BackedValueContract Factory.
 Click into BVC Factory and click “Execute”
 
 ![](https://i.imgur.com/TQEX8sR.png)
+
 Select beneficiary address and supply the beneficiary address as indicated.
 100 notional cents is equal to $1.00.
-
 
 If not enough ETH is sent to back the nominal cents value, then the contract will remain in pending state, and the emitter will either be allowed to withdraw (cancel), or send more.
 
@@ -92,6 +92,7 @@ Because 0.5ETH in contract ($5.00) - 1 (100% margin value)
 /* currentState */
 
 Either "Active" or "Pending".
+
 Pending: Requires more ETH from the Emitter to initiate the contract.
 Active: Contract is operational.
 
