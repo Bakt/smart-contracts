@@ -1,6 +1,7 @@
 Documentation // Ethereum Dollar Token                             
 authors: felix@veon.industries | nick@veon.industries
 
+Architecture Diagram
 ![](https://i.imgur.com/JFUDrMe.png)
 
 Download parity (against Ropsten) for live testing. 
