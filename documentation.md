@@ -1,6 +1,8 @@
 Documentation // Ethereum Dollar Token                             
 authors: felix@veon.industries | nick@veon.industries
 
+![](https://i.imgur.com/JFUDrMe.png)
+
 Download parity (against Ropsten) for live testing. 
 Run <C:\Program Files\Ethcore\Parity>parity.exe --testnet --warp in terminal.
 
@@ -31,6 +33,9 @@ Click into the ExchangeRateContract and call the initFetch() function to retriev
 For the purposes of making numbers easier in the demonstration given in this documentation, we have set the price manually ourselves to $10.
 
 Note: When the cron job is active to set the price automatically on a time schedule, we can use TLS proofs built into Oraclize to verify that the pricefeed is being set by the EtherscanAPI and not by ourselves.  
+
+For more information: https://docs.oraclize.it/#security
+
 Next, repeat same “Watch Contract” steps for BackedValueContract Factory.
 
 ![](https://i.imgur.com/bsdXiqJ.png)
@@ -95,4 +100,20 @@ Publically displays value of USD that beneficiary is entitled to.
 /* pendingNotionalCents */  
 If not enough ETH is sent to cover the notionalCents value.
 It temporarily stores the notionalCents value until enough ETH is sent.
+
+Below you can see how it is possible for both the emitter and the beneficiary to withdraw either cents(dollars) or wei(ether) accordingly.
+
+From the perspective of the Benficiary:
+
+![](https://i.imgur.com/zzlF8zq.png)
+
+And from the perspective of the Emitter:
+
+![](https://i.imgur.com/kyDpdba.png)
+
+Note: We have two seperate functions for withdrawls. One that allows only the full amount to be withdrawn at one time.
+The other allowing for partial withdrawls to be made possible if necessary.
+
+The entire tx history of this contract can be viewed at:
+https://testnet.etherscan.io/address/0xaa402cbd1e05d8443244ce5d0f7adeef8dd072f1#internaltx
 
