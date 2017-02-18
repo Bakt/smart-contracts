@@ -64,6 +64,7 @@ Click into the BVC Contract to find the details of the agreement between the ben
 This is notional value in cents.
 
 /* allowedEmitterWithdrawl */
+
 Assuming $10 ETH.
 100 notional cents must be covered by 0.2 ETH (200 cents)
 Using a Margin Ratio of 1 (100% margin value)
@@ -73,14 +74,17 @@ Using a Margin Ratio of 1 (100% margin value)
 = 0.3ETH excess.
 
 /* currentMargin */
-The current margin represents the ratio of the total
-contract value to the current notional value in ETH.
-i.e:
+
+The current margin represents the ratio of the total contract value to the current notional value in ETH.
+
 currentMargin = 4.0 
+
 Because 0.5ETH in contract ($5.00) - 1 (100% margin value)
+
 1 = Margin Ratio representative of (i.e $2 to cover $1)
 
 /* currentState */
+
 Either "Active" or "Pending".
 Pending: Requires more ETH from the Emitter to initiate the contract.
 Active: Contract is operational.
