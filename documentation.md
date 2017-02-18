@@ -88,6 +88,7 @@ Active: Contract is operational.
 /* notionalCents */ 
 Publically displays value of USD that beneficiary is entitled to.
 
-/* pendingNotionalCents */  If not enough ETH is sent to cover the notionalCents value.
+/* pendingNotionalCents */  
+If not enough ETH is sent to cover the notionalCents value.
 It temporarily stores the notionalCents value until enough ETH is sent.
 
