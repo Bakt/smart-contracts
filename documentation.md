@@ -58,7 +58,7 @@ Copy this address into the “Watch Contract” -> “Custom Contract” along w
 
 Click into the BVC Contract to find the details of the agreement between the beneficiary and emitter. 
 
-[]!(https://i.imgur.com/xoOQYH6.png)
+![](https://i.imgur.com/xoOQYH6.png)
 
 /*allowedBeneficiaryWithdrawl*/
 This is notional value in cents.
@@ -91,5 +91,3 @@ Publically displays value of USD that beneficiary is entitled to.
 /*pendingNotionalCents*/  If not enough ETH is sent to cover the notionalCents value.
 It temporarily stores the notionalCents value until enough ETH is sent.
 
-
-![](http://i.imgur.com/wDekcwp.png)
