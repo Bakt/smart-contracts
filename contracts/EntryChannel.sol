@@ -2,26 +2,27 @@ pragma solidity ^0.4.8;
 
 /**
 * Each EntryChannel contract accepts ether transfers and passes them on to
-* the Queue by calling Queue.createEntry(). An entry is an
-* entry in a market queue - ie. a request to enter a contract.
+* a contract given the receiver contract address and method signature.
 
  * An instance of this contract exists for each queue.
  *
- * For example: one for an ether guy and one for opposing dollar guy in the
+ * For example: one for an emitter and one for a beneficiary in the
  * case of the stable USD to ether market.
  */
 contract EntryChannel {
     /*
      *  Constants
      */
-    // at least one wei.
-    // TODO: revisit - should probably be 1 DOLLAR 
+    // at least one wei - TODO: revisit as the receiver contract will probably
+    // check this too (min 1 dollar). This is a nice check though to stop a
+    // 0 eth call early early.
     uint constant MIN_VALUE_TRANSFER = 1;
 
     /*
      *  Data
      */
-    address public market;
+    address public receiver;
+    string public funcSigHash;
 
     /*
      *  Modifiers
@@ -34,20 +35,24 @@ contract EntryChannel {
     /*
      *  Functions
      */
-    function EntryChannel(address _market)
+
+    /**
+     * @dev Address of the receiving contract to pass ether onto as well as the
+     *      hash of the function signature to call. The function should take the
+     *      senders address as the first argument.
+     */
+    function EntryChannel(address _receiver, string _funcSigHash)
     {
-        market = _market;
+        receiver = _receiver;
+        funcSigHash = _funcSigHash;
     }
 
     function()
         enoughEth
         payable
     {
-        // Use a generic call here to avoid having a dependency on Queue.
-        // This allows Queue to depend on and create EntryChannels
-        // without having an import statement based cyclic dependency.
-        if (!market.call.value(msg.value)(
-                bytes4(sha3("createEntry(address)")),
+        if (!receiver.call.value(msg.value)(
+                bytes4(funcSigHash)),
                 msg.sender
             )) throw;
     }
