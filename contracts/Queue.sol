@@ -3,9 +3,6 @@ pragma solidity ^0.4.8;
 import "./Owned.sol";
 import "./EntryChannel.sol";
 import "./EntryQueueLib.sol";
-import "./FactoryStub.sol";
-import "./ContractStore.sol";
-import "./ExchangeRateStub.sol";
 
 /**
  * A single market represents a market for entering into a 2 party contract.
@@ -14,7 +11,7 @@ import "./ExchangeRateStub.sol";
  * results in an entry on a corresponding Queue.
  *
  * Entries sit in the Queues waiting for a match with an opposing entry.
- * An offchain process called the matcher draws up a contract when it finds a
+ * An offchain process called the dollarToken draws up a contract when it finds a
  * match between 2 parties in a market.
  */
 contract Queue is Owned {
@@ -22,91 +19,79 @@ contract Queue is Owned {
     /*
      *  Events
      */
-    event MarketAdded(uint indexed marketId, string name, address etherChannel, address dollarChannel);
-    event MarketStopped(uint indexed marketId);
-    // use this event to look up all entries for an account
-    event EntryAdded(uint indexed marketId, address indexed channel, address indexed account, bytes32 newEntryId, uint value);
-    event EntryRemoved(uint indexed marketId, address indexed channel, bytes32 indexed entryId);
-    event ContractCreated(uint indexed marketId, address newContract, uint notionalValue);
+    event EntryAdded(address indexed channel, address indexed account, bytes32 newEntryId, uint value);
+    event EntryRemoved(address indexed channel, bytes32 indexed entryId);
+    event QueueStarted();
+    event QueueStopped();
 
 
     /*
      *  Data
      */
-    struct Market {
-        uint id;
-        string name;
-        bool open;
-        address etherChannel;           // ether guy enters queue here
-        address dollarChannel;          // dollar guy enters queue here
-    }
+    address public dollarToken;             // DollarToken contract
+    address public etherChannel;            // ether guy enters queue here
+    address public dollarChannel;           // dollar guy enters queue here
 
-    uint lastMarket = 0;
-
-    // market id to market
-    mapping (uint => Market) markets;
-
-    // map of channels back to market ids
-    mapping (address => uint) channelToMarket;
-
-    // channel address -> Queue of Entries
     using EntryQueueLib for EntryQueueLib.Queue;
-    mapping (address => EntryQueueLib.Queue) queues;
+    EntryQueueLib.Queue etherQueue;
+    EntryQueueLib.Queue dollarQueue;
 
-    address public matcher;             // authorized match maker
-    address public contractStore;
-    address public factory;
-    address public exRate;
+    bool queueOpen;                         // flag allows queue to be stopped in case of emergency
 
 
     /*
      *  Modifiers
      */
-    modifier isMatcher() {
-         if (msg.sender != matcher) { throw; }
+    modifier fromDollarToken() {
+         if (msg.sender != dollarToken) { throw; }
          _;
      }
 
-    modifier registeredChannelAndMarketOpen() {
-        if (markets[channelToMarket[msg.sender]].open != true) { throw; }
+    modifier fromChannel() {
+        if (msg.sender != etherChannel && msg.sender != dollarChannel) { throw; }
         _;
     }
+
+     modifier isOpen() {
+         if (queueOpen == false) { throw; }
+         _;
+     }
 
 
     /*
      *  Functions
      */
 
-    function Queue(address _contractStore, address _factory, address _exRate) {
-        contractStore = _contractStore;
-        factory = _factory;
-        exRate = _exRate;
-        setMatcher(msg.sender);  // for now just make the matcher the creater
+    function Queue() {
+        setDollarToken(0x0);  // setDollarToken called again after DollarToken created
+        EntryChannel etherChannel = new EntryChannel(this);
+        EntryChannel dollarChannel = new EntryChannel(this);
+        etherQueue.init();
+        dollarQueue.init();
     }
 
-    function setMatcher(address _newMatcher)
+    function setDollarToken(address _dollarToken)
         onlyOwner
     {
-        matcher = _newMatcher;
+        dollarToken = _dollarToken;
     }
 
     function createEntry(address _account)
         external
         payable
-        registeredChannelAndMarketOpen
+        isOpen
+        fromChannel
         returns (bytes32 entryId)
     {
         address channel = msg.sender;
-        uint marketId = channelToMarket[channel];
-        entryId = sha3(marketId, channel, _account, msg.value, block.number);
-
-        EntryQueueLib.Queue queue = queues[channel];
+        // TODO: add a nonce - what if _account creates 2 entries for the same value in the same block?
+        entryId = sha3(channel, _account, msg.value, block.number);
+        EntryQueueLib.Queue queue = (channel == etherChannel) ? etherQueue : dollarQueue;
 		queue.pushTail(entryId, _account, msg.value);
-
-        EntryAdded(marketId, channel, _account, entryId, msg.value);
+        EntryAdded(channel, _account, entryId, msg.value);
     }
 
-    function getEntryEtherGuy(uint _marketId, bytes32 _entryId)
+    function getEntryEtherGuy(bytes32 _entryId)
         constant
         returns (
             address account,
@@ -114,11 +99,10 @@ contract Queue is Owned {
             bool filled
         )
     {
-        Market market = markets[_marketId];
-        return queues[market.etherChannel].get(_entryId);
+        return etherQueue.get(_entryId);
     }
 
-    function getEntryDollar(uint _marketId, bytes32 _entryId)
+    function getEntryDollar(bytes32 _entryId)
         constant
         returns (
             address account,
@@ -126,40 +110,35 @@ contract Queue is Owned {
             bool filled
         )
     {
-        Market market = markets[_marketId];
-        return queues[market.dollarChannel].get(_entryId);
+        return dollarQueue.get(_entryId);
     }
 
-    function getOpenEtherGuy(uint _marketId)
+    function getOpenEtherGuy()
         constant
         returns (bytes32[] ids)
     {
-        Market market = markets[_marketId];
-        return queues[market.etherChannel].getOpen();
+        return etherQueue.getOpen();
     }
 
-    function getOpenDollar(uint _marketId)
+    function getOpenDollar()
         constant
         returns (bytes32[] ids)
     {
-        Market market = markets[_marketId];
-        return queues[market.dollarChannel].getOpen();
+        return dollarQueue.getOpen();
     }
 
-    function lengthEtherGuy(uint _marketId)
+    function lengthEtherGuy()
         constant
         returns (uint length)
     {
-        Market market = markets[_marketId];
-        length = queues[market.etherChannel].length;
+        length = etherQueue.length;
     }
 
-    function lengthDollar(uint _marketId)
+    function lengthDollar()
         constant
         returns (uint length)
     {
-        Market market = markets[_marketId];
-        length = queues[market.dollarChannel].length;
+        length = dollarQueue.length;
     }
 
     function entryOpen(EntryQueueLib.Queue storage queue, bytes32 entryId)
@@ -170,110 +149,44 @@ contract Queue is Owned {
         return (entry.ids.id != 0 && entry.filled == false);
     }
 
-    /*
-     *  Market Functions
+    /**
+     * @dev Remove given entries from each Queue.
+     * @return true if both removed
+     *         false if either entry doesn't exist or isn't open
      */
-
-    function addMarket(string _name)
-        external
-        onlyOwner
-        returns (uint newMarketId)
-    {
-        newMarketId = ++lastMarket;
-
-        EntryChannel etherChannel = new EntryChannel(this);
-        EntryChannel dollarChannel = new EntryChannel(this);
-
-        channelToMarket[etherChannel] = newMarketId;
-        channelToMarket[dollarChannel] = newMarketId;
-
-        queues[etherChannel].init();
-        queues[dollarChannel].init();
-
-        markets[newMarketId] = Market(newMarketId, _name, true, etherChannel, dollarChannel);
-        MarketAdded(newMarketId, _name, etherChannel, dollarChannel);
-    }
-
-    function getMarket(uint _marketId)
-        constant
-        returns (
-            string name,
-            address etherChannel,
-            address dollarChannel,
-            bool open
-        )
-    {
-        Market market = markets[_marketId];
-        name = market.name;
-        etherChannel = market.etherChannel;
-        dollarChannel = market.dollarChannel;
-        open = market.open;
-    }
-
-    function stopMarket(uint _marketId)
-        external
-        onlyOwner
-    {
-        markets[_marketId].open = false;
-    }
-
-    /*
-     * Draw up a new contract between 2 entries and remove entries from the queues.
-     */
-    function drawContract(
-        uint _marketId,
+    function remove(
         bytes32 _etherEntryId,
         bytes32 _dollarEntryId
     )
         external
-        isMatcher
-        returns (address newContract)
+        fromDollarToken
+        returns (bool)
     {
-        Market market = markets[_marketId];
-        EntryQueueLib.Queue eQueue = queues[market.etherChannel];
-        EntryQueueLib.Queue dQueue = queues[market.dollarChannel];
-
-        if (
-            entryOpen(eQueue, _etherEntryId) == false ||
-            entryOpen(dQueue, _dollarEntryId) == false
-        ) {
-            throw;
+        if (entryOpen(etherQueue, _etherEntryId) == false ||
+            entryOpen(dollarQueue, _dollarEntryId) == false) {
+            return false;
         }
+        etherQueue.remove(_etherEntryId);
+        dollarQueue.remove(_dollarEntryId);
+        EntryRemoved(etherChannel, _etherEntryId);
+        EntryRemoved(dollarChannel, _dollarEntryId);
+        return true;
+    }
 
-        EntryQueueLib.Entry etherEntry = eQueue.entries[_etherEntryId];
-        EntryQueueLib.Entry dollarEntry = dQueue.entries[_dollarEntryId];
+    function startQueue()
+        external
+        onlyOwner
+    {
+        queueOpen = true;
+        QueueStarted();
+    }
 
-        // Contract value is the lowest of the 2
-        uint valueUnrounded = (etherEntry.value > dollarEntry.value) ?
-                                    dollarEntry.value : etherEntry.value;
-
-        // Round to dollar and calculate
-        uint weiDollar = ExchangeRateStub(exRate).weiPerCent() * 100;
-        uint notionalValue = (valueUnrounded / weiDollar) * weiDollar;
-        uint valueTotal = notionalValue * 2;
-
-        // refund differences
-        if (!etherEntry.account.send(etherEntry.value - notionalValue)) {
-            throw;
-        }
-        if (!dollarEntry.account.send(dollarEntry.value - notionalValue)) {
-            throw;
-        }
-
-        // Create contract:
-        newContract = FactoryStub(factory).createBackedValueContract.value(valueTotal)(
-             etherEntry.account,              // emitter
-             dollarEntry.account,             // beneficiary
-             notionalValue
-        );
-        ContractCreated(_marketId, newContract, notionalValue);
-
-        ContractStore(contractStore).add(newContract);
-
-        eQueue.remove(_etherEntryId);
-        dQueue.remove(_dollarEntryId);
-        EntryRemoved(_marketId, market.etherChannel, _etherEntryId);
-        EntryRemoved(_marketId, market.dollarChannel, _dollarEntryId);
+    function stopQueue()
+        external
+        onlyOwner
+    {
+        queueOpen = false;
+        QueueStopped();
     }
 
 }
