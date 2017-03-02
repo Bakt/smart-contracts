@@ -2,7 +2,7 @@ pragma solidity ^0.4.8;
 
 /**
 * Each EntryChannel contract accepts ether transfers and passes them on to
-* the MarketQueues by calling MarketQueues.createEntry(). An entry is an
+* the Queue by calling Queue.createEntry(). An entry is an
 * entry in a market queue - ie. a request to enter a contract.
 
  * An instance of this contract exists for each queue.
@@ -43,8 +43,8 @@ contract EntryChannel {
         enoughEth
         payable
     {
-        // Use a generic call here to avoid having a dependency on MarketQueues.
-        // This allows MarketQueues to depend on and create EntryChannels
+        // Use a generic call here to avoid having a dependency on Queue.
+        // This allows Queue to depend on and create EntryChannels
         // without having an import statement based cyclic dependency.
         if (!market.call.value(msg.value)(
                 bytes4(sha3("createEntry(address)")),

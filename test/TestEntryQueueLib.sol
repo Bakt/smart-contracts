@@ -3,17 +3,17 @@ pragma solidity ^0.4.8;
 
 import "truffle/Assert.sol";
 import "truffle/DeployedAddresses.sol";
-import "../contracts/EntryQueue.sol";
+import "../contracts/EntryQueueLib.sol";
 
 /**
- * Test the EntryQueue library directly using a local instance of the
- * EntryQueue.Queue.
+ * Test the EntryQueueLib library directly using a local instance of the
+ * EntryQueueLib.Queue.
  */
 
-contract TestEntryQueue {
+contract TestEntryQueueLib {
 
-    using EntryQueue for EntryQueue.Queue;
-    EntryQueue.Queue queue;
+    using EntryQueueLib for EntryQueueLib.Queue;
+    EntryQueueLib.Queue queue;
 
     address A1 = 0x1;
     address A2 = 0x2;
@@ -157,7 +157,7 @@ contract TestEntryQueue {
     /**
      * Just reset the pointers.
      */
-    function removeAll(EntryQueue.Queue storage queue)
+    function removeAll(EntryQueueLib.Queue storage queue)
         internal
     {
         queue.head = 0x0;

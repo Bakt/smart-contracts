@@ -17,7 +17,7 @@ pragma solidity ^0.4.8;
  *         once templates / generics are added to the Solidity language:
  *            https://github.com/ethereum/solidity/issues/869
  */
-library EntryQueue {
+library EntryQueueLib {
 
     struct Queue {
         bytes32 head;

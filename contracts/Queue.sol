@@ -2,7 +2,7 @@ pragma solidity ^0.4.8;
 
 import "./Owned.sol";
 import "./EntryChannel.sol";
-import "./EntryQueue.sol";
+import "./EntryQueueLib.sol";
 import "./FactoryStub.sol";
 import "./ContractStore.sol";
 import "./ExchangeRateStub.sol";
@@ -17,7 +17,7 @@ import "./ExchangeRateStub.sol";
  * An offchain process called the matcher draws up a contract when it finds a
  * match between 2 parties in a market.
  */
-contract MarketQueues is Owned {
+contract Queue is Owned {
 
     /*
      *  Events
@@ -50,8 +50,8 @@ contract MarketQueues is Owned {
     mapping (address => uint) channelToMarket;
 
     // channel address -> Queue of Entries
-    using EntryQueue for EntryQueue.Queue;
-    mapping (address => EntryQueue.Queue) queues;
+    using EntryQueueLib for EntryQueueLib.Queue;
+    mapping (address => EntryQueueLib.Queue) queues;
 
     address public matcher;             // authorized match maker
     address public contractStore;
@@ -77,7 +77,7 @@ contract MarketQueues is Owned {
      *  Functions
      */
 
-    function MarketQueues(address _contractStore, address _factory, address _exRate) {
+    function Queue(address _contractStore, address _factory, address _exRate) {
         contractStore = _contractStore;
         factory = _factory;
         exRate = _exRate;
@@ -100,7 +100,7 @@ contract MarketQueues is Owned {
         uint marketId = channelToMarket[channel];
         entryId = sha3(marketId, channel, _account, msg.value, block.number);
 
-        EntryQueue.Queue queue = queues[channel];
+        EntryQueueLib.Queue queue = queues[channel];
 		queue.pushTail(entryId, _account, msg.value);
 
         EntryAdded(marketId, channel, _account, entryId, msg.value);
@@ -162,11 +162,11 @@ contract MarketQueues is Owned {
         length = queues[market.dollarChannel].length;
     }
 
-    function entryOpen(EntryQueue.Queue storage queue, bytes32 entryId)
+    function entryOpen(EntryQueueLib.Queue storage queue, bytes32 entryId)
         internal
         returns (bool)
     {
-        EntryQueue.Entry entry = queue.entries[entryId];
+        EntryQueueLib.Entry entry = queue.entries[entryId];
         return (entry.ids.id != 0 && entry.filled == false);
     }
 
@@ -230,8 +230,8 @@ contract MarketQueues is Owned {
         returns (address newContract)
     {
         Market market = markets[_marketId];
-        EntryQueue.Queue eQueue = queues[market.etherChannel];
-        EntryQueue.Queue dQueue = queues[market.dollarChannel];
+        EntryQueueLib.Queue eQueue = queues[market.etherChannel];
+        EntryQueueLib.Queue dQueue = queues[market.dollarChannel];
 
         if (
             entryOpen(eQueue, _etherEntryId) == false ||
@@ -240,8 +240,8 @@ contract MarketQueues is Owned {
             throw;
         }
 
-        EntryQueue.Entry etherEntry = eQueue.entries[_etherEntryId];
-        EntryQueue.Entry dollarEntry = dQueue.entries[_dollarEntryId];
+        EntryQueueLib.Entry etherEntry = eQueue.entries[_etherEntryId];
+        EntryQueueLib.Entry dollarEntry = dQueue.entries[_dollarEntryId];
 
         // Contract value is the lowest of the 2
         uint valueUnrounded = (etherEntry.value > dollarEntry.value) ?

@@ -1,6 +1,6 @@
 const BigNumber = require('bignumber.js')
 
-const MarketQueues = artifacts.require("./MarketQueues.sol")
+const Queue = artifacts.require("./Queue.sol")
 const ContractStore = artifacts.require("./ContractStore.sol")
 const ExchangeRateStub = artifacts.require("./ExchangeRateStub.sol")
 
@@ -11,7 +11,7 @@ const bal = (addr) => { return web3.eth.getBalance(addr).toNumber() }
 const balBigNumber = (addr) => { return web3.eth.getBalance(addr) }
 const gas = (receipt) => { return receipt.gasUsed * GAS_PRICE }
 
-contract('MarketQueues', (accounts) => {
+contract('Queue', (accounts) => {
 
     const PARTY1 = accounts[5], PARTY2 = accounts[6];
 
@@ -25,7 +25,7 @@ contract('MarketQueues', (accounts) => {
         let dChannel, dEntry
         let balP1Before, balP2Before
 
-        MarketQueues.deployed().then((c) => {
+        Queue.deployed().then((c) => {
             marketQueues = c
             return ExchangeRateStub.deployed()
         }).then((exRate) => {
@@ -168,7 +168,7 @@ contract('MarketQueues', (accounts) => {
         let marketQueues, marketId
         let eChannel, dChannel
 
-        MarketQueues.deployed().then((c) => {
+        Queue.deployed().then((c) => {
             marketQueues = c
             return marketQueues.addMarket(NAME)
         }).then((result) => {
@@ -188,7 +188,7 @@ contract('MarketQueues', (accounts) => {
 
     it("should update matcher address sender is owner", (done) => {
         const newMatcher = accounts[9]
-        MarketQueues.deployed().then((marketQueues) => {
+        Queue.deployed().then((marketQueues) => {
             marketQueues.matcher.call().then((matcher) => {
                 assert.equal(matcher, accounts[0])
                 return marketQueues.setMatcher(newMatcher)
@@ -203,7 +203,7 @@ contract('MarketQueues', (accounts) => {
 
     it("should fail update matcher address if sender not owner", (done) => {
         const newMatcher = accounts[9]
-        MarketQueues.deployed().then((marketQueues) => {
+        Queue.deployed().then((marketQueues) => {
             return marketQueues.setMatcher(newMatcher, {from: accounts[2]})
         }).then(() => {
             assert.fail("Should have thrown an exception")
