@@ -36,8 +36,8 @@ contract('DollarToken', (accounts) => {
             weiPerDollar = weiPerCent * 100
             // console.log(`Exchange Rate(per USD cent): ${weiPerCent}`)
             return Promise.all([
-                dt.getOpenDollar.call(matcher),
-                dt.getOpenEtherGuy.call(matcher)
+                dt.getOpenBeneficiary.call(matcher),
+                dt.getOpenEmitter.call(matcher)
             ])
         }).then((idLists) => {
             assert.equal(idLists[0].length, 0)
@@ -67,12 +67,12 @@ contract('DollarToken', (accounts) => {
             assert.equal(bal(dChannel), 0)
             assert.equal(bal(eChannel), 0)
 
-            return dt.getOpenDollar.call(matcher)
+            return dt.getOpenBeneficiary.call(matcher)
         }).then((entryIds) => {
             assert.equal(entryIds.length, 1)
             dEntry = entryIds[0]
         }).then(() => {
-            return dt.getOpenEtherGuy.call(matcher)
+            return dt.getOpenEmitter.call(matcher)
         }).then((entryIds) => {
             assert.equal(entryIds.length, 1)
             eEntry = entryIds[0]
@@ -80,12 +80,12 @@ contract('DollarToken', (accounts) => {
             /*
              *  Get and check all entry details
              */
-            return dt.getEntryDollar.call(matcher, dEntry)
+            return dt.getEntryBeneficiary.call(matcher, dEntry)
         }).then((result) => {
             assert.equal(result[0], PARTY1)
             assert.equal(result[1], weiP1)
             assert.isFalse(result[2])
-            return dt.getEntryEtherGuy.call(matcher, eEntry)
+            return dt.getEntryEmitter.call(matcher, eEntry)
         }).then((result) => {
             assert.equal(result[0], PARTY2)
             assert.equal(result[1], weiP2)
@@ -141,16 +141,16 @@ contract('DollarToken', (accounts) => {
             /*
              *  check entries removed and set to filled
              */
-            return dt.lengthEtherGuy.call(matcher)
+            return dt.lengthEmitter.call(matcher)
         }).then((count) => {
             assert.equal(count.toNumber(), 0)
-            return dt.lengthDollar.call(matcher)
+            return dt.lengthBeneficiary.call(matcher)
         }).then((count) => {
             assert.equal(count.toNumber(), 0)
-            return dt.getEntryEtherGuy.call(matcher, eEntry)
+            return dt.getEntryEmitter.call(matcher, eEntry)
         }).then((result) => {
             assert(result[2])  // filled
-            return dt.getEntryDollar.call(matcher, dEntry)
+            return dt.getEntryBeneficiary.call(matcher, dEntry)
         }).then((result) => {
             assert(result[2])  // filled
 

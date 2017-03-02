@@ -29,8 +29,8 @@ contract('Queue', (accounts) => {
             [eChannel, dChannel] = channels
 
             return Promise.all([
-                queue.getOpenDollar.call(),
-                queue.getOpenEtherGuy.call()
+                queue.getOpenBeneficiary.call(),
+                queue.getOpenEmitter.call()
             ])
         }).then((idLists) => {
             assert.equal(idLists[0].length, 0)
@@ -58,12 +58,12 @@ contract('Queue', (accounts) => {
         }).then((result) => {
             assert.equal(bal(dChannel), 0)
             assert.equal(bal(eChannel), 0)
-            return queue.getOpenDollar.call()
+            return queue.getOpenBeneficiary.call()
         }).then((entryIds) => {
             assert.equal(entryIds.length, 1)
             dEntry = entryIds[0]
         }).then(() => {
-            return queue.getOpenEtherGuy.call()
+            return queue.getOpenEmitter.call()
         }).then((entryIds) => {
             assert.equal(entryIds.length, 1)
             eEntry = entryIds[0]
@@ -71,12 +71,12 @@ contract('Queue', (accounts) => {
             /*
              *  Get and check all entry details
              */
-            return queue.getEntryDollar.call(dEntry)
+            return queue.getEntryBeneficiary.call(dEntry)
         }).then((result) => {
             assert.equal(result[0], PARTY1)
             assert.equal(result[1], weiP1)
             assert.isFalse(result[2])
-            return queue.getEntryEtherGuy.call(eEntry)
+            return queue.getEntryEmitter.call(eEntry)
         }).then((result) => {
             assert.equal(result[0], PARTY2)
             assert.equal(result[1], weiP2)
@@ -91,16 +91,16 @@ contract('Queue', (accounts) => {
             /*
              *  check entries removed and set to filled
              */
-            return queue.lengthEtherGuy.call()
+            return queue.lengthEmitter.call()
         }).then((count) => {
             assert.equal(count.toNumber(), 0)
-            return queue.lengthDollar.call()
+            return queue.lengthBeneficiary.call()
         }).then((count) => {
             assert.equal(count.toNumber(), 0)
-            return queue.getEntryEtherGuy.call(eEntry)
+            return queue.getEntryEmitter.call(eEntry)
         }).then((result) => {
             assert(result[2])  // filled
-            return queue.getEntryDollar.call(dEntry)
+            return queue.getEntryBeneficiary.call(dEntry)
         }).then((result) => {
             assert(result[2])  // filled
 

@@ -86,19 +86,19 @@ contract DollarToken is Owned {
      * Draw up a new contract between 2 entries and remove entries from the queues.
      */
     function emitContract(
-        bytes32 _etherEntryId,
-        bytes32 _dollarEntryId
+        bytes32 _emitterEntryId,
+        bytes32 _beneficiaryEntryId
     )
         external
         fromMatcher
         returns (address newContract)
     {
-        if (Queue(queue).remove(_etherEntryId, _dollarEntryId) == false) {
+        if (Queue(queue).remove(_emitterEntryId, _beneficiaryEntryId) == false) {
             throw;
         }
 
-        var (dollarAccount, dollarValue, ) = Queue(queue).getEntryDollar(_dollarEntryId);
-        var (etherAccount, etherValue, ) = Queue(queue).getEntryEtherGuy(_etherEntryId);
+        var (dollarAccount, dollarValue, ) = Queue(queue).getEntryBeneficiary(_beneficiaryEntryId);
+        var (etherAccount, etherValue, ) = Queue(queue).getEntryEmitter(_emitterEntryId);
 
         // Contract value is the lowest of the 2
         uint valueUnrounded = (etherValue > dollarValue) ?

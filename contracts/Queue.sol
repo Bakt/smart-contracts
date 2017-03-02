@@ -6,7 +6,7 @@ import "./EntryQueueLib.sol";
 
 /**
  * A single market represents a market for entering into a 2 party contract.
- * Two parties, dollar and an ether party are required to open a contract.
+ * Two parties, emitter and beneficiary parties are required to open a contract.
  * Parties enter a contract by first sending ether to an EntryChannel which
  * results in an entry on a corresponding Queue.
  *
@@ -29,12 +29,12 @@ contract Queue is Owned {
      *  Data
      */
     address public dollarToken;             // DollarToken contract
-    address public etherChannel;            // ether guy enters queue here
-    address public dollarChannel;           // dollar guy enters queue here
+    address public emitterChannel;            // ether guy enters queue here
+    address public beneficiaryChannel;           // dollar guy enters queue here
 
     using EntryQueueLib for EntryQueueLib.Queue;
-    EntryQueueLib.Queue etherQueue;
-    EntryQueueLib.Queue dollarQueue;
+    EntryQueueLib.Queue emitterQueue;
+    EntryQueueLib.Queue beneficiaryQueue;
 
     bool queueOpen;                         // flag allows queue to be stopped in case of emergency
 
@@ -48,7 +48,7 @@ contract Queue is Owned {
      }
 
     modifier fromChannel() {
-        if (msg.sender != etherChannel && msg.sender != dollarChannel) { throw; }
+        if (msg.sender != emitterChannel && msg.sender != beneficiaryChannel) { throw; }
         _;
     }
 
@@ -64,10 +64,10 @@ contract Queue is Owned {
 
     function Queue() {
         setDollarToken(0x0);  // setDollarToken called again after DollarToken created
-        EntryChannel etherChannel = new EntryChannel(this);
-        EntryChannel dollarChannel = new EntryChannel(this);
-        etherQueue.init();
-        dollarQueue.init();
+        EntryChannel emitterChannel = new EntryChannel(this);
+        EntryChannel beneficiaryChannel = new EntryChannel(this);
+        emitterQueue.init();
+        beneficiaryQueue.init();
     }
 
     function setDollarToken(address _dollarToken)
@@ -86,12 +86,12 @@ contract Queue is Owned {
         address channel = msg.sender;
         // TODO: add a nonce - what if _account creates 2 entries for the same value in the same block?
         entryId = sha3(channel, _account, msg.value, block.number);
-        EntryQueueLib.Queue queue = (channel == etherChannel) ? etherQueue : dollarQueue;
+        EntryQueueLib.Queue queue = (channel == emitterChannel) ? emitterQueue : beneficiaryQueue;
 		queue.pushTail(entryId, _account, msg.value);
         EntryAdded(channel, _account, entryId, msg.value);
     }
 
-    function getEntryEtherGuy(bytes32 _entryId)
+    function getEntryEmitter(bytes32 _entryId)
         constant
         returns (
             address account,
@@ -99,10 +99,10 @@ contract Queue is Owned {
             bool filled
         )
     {
-        return etherQueue.get(_entryId);
+        return emitterQueue.get(_entryId);
     }
 
-    function getEntryDollar(bytes32 _entryId)
+    function getEntryBeneficiary(bytes32 _entryId)
         constant
         returns (
             address account,
@@ -110,35 +110,35 @@ contract Queue is Owned {
             bool filled
         )
     {
-        return dollarQueue.get(_entryId);
+        return beneficiaryQueue.get(_entryId);
     }
 
-    function getOpenEtherGuy()
+    function getOpenEmitter()
         constant
         returns (bytes32[] ids)
     {
-        return etherQueue.getOpen();
+        return emitterQueue.getOpen();
     }
 
-    function getOpenDollar()
+    function getOpenBeneficiary()
         constant
         returns (bytes32[] ids)
     {
-        return dollarQueue.getOpen();
+        return beneficiaryQueue.getOpen();
     }
 
-    function lengthEtherGuy()
+    function lengthEmitter()
         constant
         returns (uint length)
     {
-        length = etherQueue.length;
+        length = emitterQueue.length;
     }
 
-    function lengthDollar()
+    function lengthBeneficiary()
         constant
         returns (uint length)
     {
-        length = dollarQueue.length;
+        length = beneficiaryQueue.length;
     }
 
     function entryOpen(EntryQueueLib.Queue storage queue, bytes32 entryId)
@@ -155,21 +155,21 @@ contract Queue is Owned {
      *         false if either entry doesn't exist or isn't open
      */
     function remove(
-        bytes32 _etherEntryId,
-        bytes32 _dollarEntryId
+        bytes32 _emitterEntryId,
+        bytes32 _beneficiaryEntryId
     )
         external
         fromDollarToken
         returns (bool)
     {
-        if (entryOpen(etherQueue, _etherEntryId) == false ||
-            entryOpen(dollarQueue, _dollarEntryId) == false) {
+        if (entryOpen(emitterQueue, _emitterEntryId) == false ||
+            entryOpen(beneficiaryQueue, _beneficiaryEntryId) == false) {
             return false;
         }
-        etherQueue.remove(_etherEntryId);
-        dollarQueue.remove(_dollarEntryId);
-        EntryRemoved(etherChannel, _etherEntryId);
-        EntryRemoved(dollarChannel, _dollarEntryId);
+        emitterQueue.remove(_emitterEntryId);
+        beneficiaryQueue.remove(_beneficiaryEntryId);
+        EntryRemoved(emitterChannel, _emitterEntryId);
+        EntryRemoved(beneficiaryChannel, _beneficiaryEntryId);
         return true;
     }
 
