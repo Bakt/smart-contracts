@@ -9,16 +9,18 @@ contract Receiver {
     function receive(address sender) payable { }
 }
 `
+const FUNC_SIG = 'receive(address)'
 
 contract('EntryChannel', (accounts) => {
-
-    const FUNC_SIG_HASH = web3.sha3('receive(address)')
 
     let receiver
 
     before(() => {
         createContract("Receiver", RECEIVER_CONTRACTS_SOURCE).then((instance) => {
             receiver = instance
+        }).catch((err) => {
+            console.error(err.message)
+            done()
         })
     })
 
@@ -38,7 +40,7 @@ contract('EntryChannel', (accounts) => {
     })
 
     function newEntryChannel() {
-        return EntryChannel.new(receiver.address, FUNC_SIG_HASH)
+        return EntryChannel.new(receiver.address, FUNC_SIG)
     }
 
     function createContract(name, source) {

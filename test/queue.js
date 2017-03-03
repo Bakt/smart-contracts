@@ -21,16 +21,17 @@ contract('Queue', (accounts) => {
 
         Queue.deployed().then((c) => {
             queue = c
+
             return Promise.all([
-                queue.etherChannel.call(),
-                queue.dollarChannel.call()
+                queue.emitterChannel.call(),
+                queue.beneficiaryChannel.call()
             ])
         }).then((channels) => {
             [eChannel, dChannel] = channels
 
             return Promise.all([
-                queue.getOpenBeneficiary.call(),
-                queue.getOpenEmitter.call()
+                queue.getOpenEmitter.call(),
+                queue.getOpenBeneficiary.call()
             ])
         }).then((idLists) => {
             assert.equal(idLists[0].length, 0)
@@ -56,6 +57,7 @@ contract('Queue', (accounts) => {
                 })
             ])
         }).then((result) => {
+            // check all ETH passed through
             assert.equal(bal(dChannel), 0)
             assert.equal(bal(eChannel), 0)
             return queue.getOpenBeneficiary.call()
@@ -108,25 +110,22 @@ contract('Queue', (accounts) => {
         })
     })
 
-    it("should update DollarToken address sender is owner", (done) => {
-        const newDollarToken = accounts[9]
+    it.skip("should update DollarToken address if sender is owner", (done) => {
+        const newAddr = accounts[9] // just use an account address
         Queue.deployed().then((queue) => {
-            queue.dollarToken.call().then((dollarToken) => {
-                assert.equal(dollarToken, accounts[0])
-                return queue.setDollarToken(newDollarToken)
-            }).then(() => {
+            queue.setDollarToken(newAddr, {from: accounts[0]}).then(() => {
                 return queue.dollarToken.call()
             }).then((dollarToken) => {
-                assert.equal(dollarToken, newDollarToken)
+                assert.equal(dollarToken, newAddr)
                 done()
             })
         })
     })
 
-    it("should fail update DollarToken address if sender not owner", (done) => {
-        const newDollarToken = accounts[9]
+    it.skip("should fail update DollarToken address if sender not owner", (done) => {
+        const newAddr = accounts[9] // just use an account address
         Queue.deployed().then((queue) => {
-            return queue.setDollarToken(newDollarToken, {from: accounts[2]})
+            return queue.setDollarToken(newAddr, {from: accounts[2]})
         }).then(() => {
             assert.fail("Should have thrown an exception")
         }).catch((err) => {

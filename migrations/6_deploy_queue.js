@@ -13,23 +13,24 @@ module.exports = function(deployer) {
     deployer.link(EntryQueueLib, Queue)
 
     deployer.deploy(ContractStore).then(() => {
-        return deployer.deploy(Queue)
-    }).then(() => {
         return deployer.deploy(FactoryStub)
     }).then(() => {
         return deployer.deploy(ExchangeRateStub, WEI_PER_CENT)
     }).then(() => {
-        return Queue.deployed()
-    }).then((queue) => {
-        deployer.deploy(
+        return deployer.deploy(
             DollarToken,
             ContractStore.address,
             FactoryStub.address,
             ExchangeRateStub.address,
-            queue.address,
-            MATCHER_ACCOUNT
-        ).then(() => {
-            return queue.setDollarToken(DollarToken.address)
+            0x0,   // set it below when it has been created
+            MATCHER_ACCOUNT)
+    }).then(() => {
+        return DollarToken.deployed()
+    }).then((dollarToken) => {
+        return deployer.deploy(Queue, dollarToken.address).then(() => {
+            return dollarToken.setQueue(Queue.address)
+        }).then(() => {
+            // done
         }).catch((err) => {
             console.log(`ERROR: ${err}`)
         })

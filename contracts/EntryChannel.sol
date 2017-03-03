@@ -22,7 +22,7 @@ contract EntryChannel {
      *  Data
      */
     address public receiver;
-    string public funcSigHash;
+    bytes32 public funcSigHash;
 
     /*
      *  Modifiers
@@ -41,10 +41,10 @@ contract EntryChannel {
      *      hash of the function signature to call. The function should take the
      *      senders address as the first argument.
      */
-    function EntryChannel(address _receiver, string _funcSigHash)
+    function EntryChannel(address _receiver, string _funcSig)
     {
         receiver = _receiver;
-        funcSigHash = _funcSigHash;
+        funcSigHash = sha3(_funcSig);
     }
 
     function()
@@ -52,7 +52,7 @@ contract EntryChannel {
         payable
     {
         if (!receiver.call.value(msg.value)(
-                bytes4(funcSigHash)),
+                bytes4(funcSigHash),
                 msg.sender
             )) throw;
     }

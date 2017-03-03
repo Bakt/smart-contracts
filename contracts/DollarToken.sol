@@ -28,9 +28,19 @@ contract DollarToken is Owned {
      *  Modifiers
      */
     modifier fromMatcher() {
-         if (msg.sender != matcher) { throw; }
-         _;
-     }
+        if (msg.sender != matcher) { throw; }
+        _;
+    }
+
+    modifier fromEmitterChannel() {
+        if (msg.sender != Queue(queue).emitterChannel()) { throw; }
+        _;
+    }
+
+    modifier fromBeneficiaryChannel() {
+        if (msg.sender != Queue(queue).beneficiaryChannel()) { throw; }
+        _;
+    }
 
 
     /*
@@ -81,9 +91,30 @@ contract DollarToken is Owned {
         matcher = _matcher;
     }
 
+    function emitBackingValue(address _emitterAddr)
+        external
+        payable
+        fromEmitterChannel
+    {
+        // TODO:
+        //  receiveFee
+        //  allowWithdrawal
+        Queue(queue).addEmitter(_emitterAddr, msg.value);
+    }
 
-    /*
-     * Draw up a new contract between 2 entries and remove entries from the queues.
+    function purchaseDollars(address _beneficiaryAddr)
+        external
+        payable
+        fromBeneficiaryChannel
+    {
+        // TODO:
+        //  receiveFee
+        //  allowWithdrawal
+        Queue(queue).addBeneficiary(_beneficiaryAddr, msg.value);
+    }
+
+    /**
+     * @dev Draw up a new contract between 2 entries and remove entries from the queues.
      */
     function emitContract(
         bytes32 _emitterEntryId,

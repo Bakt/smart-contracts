@@ -19,8 +19,10 @@ contract Queue is Owned {
     /*
      *  Events
      */
-    event EntryAdded(address indexed channel, address indexed account, bytes32 newEntryId, uint value);
-    event EntryRemoved(address indexed channel, bytes32 indexed entryId);
+    event EmitterAdded(address indexed account, bytes32 newEntryId, uint value);
+    event EmitterRemoved(bytes32 indexed entryId);
+    event BeneficiaryAdded(address indexed account, bytes32 newEntryId, uint value);
+    event BeneficiaryRemoved(bytes32 indexed entryId);
     event QueueStarted();
     event QueueStopped();
 
@@ -28,6 +30,9 @@ contract Queue is Owned {
     /*
      *  Data
      */
+    string constant EMITTER_DOLLARTOKEN_FUNCTION = "emitBackingValue(address)";
+    string constant BENEFICIARY_DOLLARTOKEN_FUNCTION = "purchaseDollars(address)";
+
     address public dollarToken;             // DollarToken contract
     address public emitterChannel;            // ether guy enters queue here
     address public beneficiaryChannel;           // dollar guy enters queue here
@@ -62,33 +67,45 @@ contract Queue is Owned {
      *  Functions
      */
 
-    function Queue() {
-        setDollarToken(0x0);  // setDollarToken called again after DollarToken created
-        EntryChannel emitterChannel = new EntryChannel(this);
-        EntryChannel beneficiaryChannel = new EntryChannel(this);
+    function Queue(address _dollarToken) {
+        dollarToken = _dollarToken;
+        EntryChannel emitterChannel = new EntryChannel(dollarToken, EMITTER_DOLLARTOKEN_FUNCTION);
+        EntryChannel beneficiaryChannel = new EntryChannel(dollarToken, BENEFICIARY_DOLLARTOKEN_FUNCTION);
         emitterQueue.init();
         beneficiaryQueue.init();
     }
 
-    function setDollarToken(address _dollarToken)
+    /**
+     * TODO: implement setDollarToken - needs to go an update the EntryChannel references as well
+     */
+
+    /*function setDollarToken(address _dollarToken)
         onlyOwner
     {
-        dollarToken = _dollarToken;
-    }
+    }*/
 
-    function createEntry(address _account)
+    function addEmitter(address _account, uint _amount)
         external
-        payable
         isOpen
-        fromChannel
+        fromDollarToken
         returns (bytes32 entryId)
     {
-        address channel = msg.sender;
         // TODO: add a nonce - what if _account creates 2 entries for the same value in the same block?
-        entryId = sha3(channel, _account, msg.value, block.number);
-        EntryQueueLib.Queue queue = (channel == emitterChannel) ? emitterQueue : beneficiaryQueue;
-		queue.pushTail(entryId, _account, msg.value);
-        EntryAdded(channel, _account, entryId, msg.value);
+        entryId = sha3("emitter", _account, _amount, block.number);
+		emitterQueue.pushTail(entryId, _account, _amount);
+        EmitterAdded(_account, entryId, _amount);
+    }
+
+    function addBeneficiary(address _account, uint _amount)
+        external
+        isOpen
+        fromDollarToken
+        returns (bytes32 entryId)
+    {
+        // TODO: add a nonce - what if _account creates 2 entries for the same value in the same block?
+        entryId = sha3("beneficiary", _account, _amount, block.number);
+		beneficiaryQueue.pushTail(entryId, _account, _amount);
+        BeneficiaryAdded(_account, entryId, _amount);
     }
 
     function getEntryEmitter(bytes32 _entryId)
@@ -168,8 +185,8 @@ contract Queue is Owned {
         }
         emitterQueue.remove(_emitterEntryId);
         beneficiaryQueue.remove(_beneficiaryEntryId);
-        EntryRemoved(emitterChannel, _emitterEntryId);
-        EntryRemoved(beneficiaryChannel, _beneficiaryEntryId);
+        EmitterRemoved(_emitterEntryId);
+        BeneficiaryRemoved(_beneficiaryEntryId);
         return true;
     }
 
