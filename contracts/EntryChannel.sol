@@ -1,5 +1,7 @@
 pragma solidity ^0.4.8;
 
+import "./Owned.sol";
+
 /**
 * Each EntryChannel contract accepts ether transfers and passes them on to
 * a contract given the receiver contract address and method signature.
@@ -9,7 +11,7 @@ pragma solidity ^0.4.8;
  * For example: one for an emitter and one for a beneficiary in the
  * case of the stable USD to ether market.
  */
-contract EntryChannel {
+contract EntryChannel is Owned {
     /*
      *  Constants
      */
@@ -35,6 +37,15 @@ contract EntryChannel {
     /*
      *  Functions
      */
+
+    /**
+     * @dev change the receiver contract to another one
+     */
+    function setReceiver(address _receiver)
+         onlyOwner
+    {
+        receiver = _receiver;
+    }
 
     /**
      * @dev Address of the receiving contract to pass ether onto as well as the

@@ -76,18 +76,22 @@ contract('Queue', (accounts) => {
             return queue.getEntryBeneficiary.call(dEntry)
         }).then((result) => {
             assert.equal(result[0], PARTY1)
-            assert.equal(result[1], weiP1)
+            assert(result[1].eq(weiP1))
             assert.isFalse(result[2])
             return queue.getEntryEmitter.call(eEntry)
         }).then((result) => {
             assert.equal(result[0], PARTY2)
-            assert.equal(result[1], weiP2)
+            assert(result[1].eq(weiP2))
             assert.isFalse(result[2])
 
             /*
-             *  drawContract for the 2 matching entries
+             *  Remove entries (NOTE: can only be called by DollarToken so first
+             *      change DollarToken address to a local account)
              */
-            return queue.remove(eEntry, dEntry)
+             return queue.setDollarToken(accounts[9])
+         }).then((result) => {
+
+            return queue.remove(eEntry, dEntry, {from:accounts[9]})
         }).then((result) => {
             console.log(`check result (${result}) has false return value`)
             /*

@@ -69,20 +69,25 @@ contract Queue is Owned {
 
     function Queue(address _dollarToken) {
         dollarToken = _dollarToken;
-        EntryChannel emitterChannel = new EntryChannel(dollarToken, EMITTER_DOLLARTOKEN_FUNCTION);
-        EntryChannel beneficiaryChannel = new EntryChannel(dollarToken, BENEFICIARY_DOLLARTOKEN_FUNCTION);
+        emitterChannel = new EntryChannel(dollarToken, EMITTER_DOLLARTOKEN_FUNCTION);
+        beneficiaryChannel = new EntryChannel(dollarToken, BENEFICIARY_DOLLARTOKEN_FUNCTION);
         emitterQueue.init();
         beneficiaryQueue.init();
+        queueOpen = true;
     }
 
     /**
-     * TODO: implement setDollarToken - needs to go an update the EntryChannel references as well
+     * @dev Change the DollarToken contract address
+     
+     * NOTE: caller would also need to update the EntryChannel receivers.
+     * TODO: look at updating EntryChannels here in the same transaction or even
+     *          changing to use a service registry or similar.
      */
-
-    /*function setDollarToken(address _dollarToken)
+    function setDollarToken(address _dollarToken)
         onlyOwner
     {
-    }*/
+        dollarToken = _dollarToken;
+    }
 
     function addEmitter(address _account, uint _amount)
         external
