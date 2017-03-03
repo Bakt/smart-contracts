@@ -128,12 +128,12 @@ contract DollarToken is Owned {
             throw;
         }
 
-        var (dollarAccount, dollarValue, ) = Queue(queue).getEntryBeneficiary(_beneficiaryEntryId);
-        var (etherAccount, etherValue, ) = Queue(queue).getEntryEmitter(_emitterEntryId);
+        var (beneAccount, beneValue, ) = Queue(queue).getEntryBeneficiary(_beneficiaryEntryId);
+        var (emitAccount, emitValue, ) = Queue(queue).getEntryEmitter(_emitterEntryId);
 
         // Contract value is the lowest of the 2
-        uint valueUnrounded = (etherValue > dollarValue) ?
-                                    dollarValue : etherValue;
+        uint valueUnrounded = (emitValue > beneValue) ?
+                                    beneValue : emitValue;
 
         // Round to dollar and calculate
         uint weiDollar = ExchangeRateStub(exchangeRate).weiPerCent() * 100;
@@ -143,17 +143,17 @@ contract DollarToken is Owned {
         /* WILL BE REPLACED WITH WITHDRAW PATTERN AND WITHDRAW CONTRACT */
 
         /*// refund differences
-        if (!etherAccount.account.send(etherValue - notionalValue)) {
+        if (!emitAccount.account.send(emitValue - notionalValue)) {
             throw;
         }
-        if (!dollarAccount.send(dollarValue - notionalValue)) {
+        if (!beneAccount.send(beneValue - notionalValue)) {
             throw;
         }*/
 
         // Create contract:
         newContract = FactoryStub(factory).createBackedValueContract.value(valueTotal)(
-             etherAccount,              // emitter
-             dollarAccount,             // beneficiary
+             emitAccount,
+             beneAccount,
              notionalValue
         );
         ContractCreated(newContract, notionalValue);
