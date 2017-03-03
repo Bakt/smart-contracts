@@ -93,7 +93,9 @@ contract('Queue', (accounts) => {
 
             return queue.remove(eEntry, dEntry, {from:accounts[9]})
         }).then((result) => {
-            console.log(`check result (${result}) has false return value`)
+            assert.equal(result.logs[0].event, "EmitterRemoved")
+            assert.equal(result.logs[1].event, "BeneficiaryRemoved")
+
             /*
              *  check entries removed and set to filled
              */
@@ -114,7 +116,7 @@ contract('Queue', (accounts) => {
         })
     })
 
-    it.skip("should update DollarToken address if sender is owner", (done) => {
+    it("should update DollarToken address if sender is owner", (done) => {
         const newAddr = accounts[9] // just use an account address
         Queue.deployed().then((queue) => {
             queue.setDollarToken(newAddr, {from: accounts[0]}).then(() => {
@@ -126,7 +128,7 @@ contract('Queue', (accounts) => {
         })
     })
 
-    it.skip("should fail update DollarToken address if sender not owner", (done) => {
+    it("should fail update DollarToken address if sender not owner", (done) => {
         const newAddr = accounts[9] // just use an account address
         Queue.deployed().then((queue) => {
             return queue.setDollarToken(newAddr, {from: accounts[2]})
