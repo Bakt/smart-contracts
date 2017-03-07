@@ -3,6 +3,7 @@ pragma solidity ^0.4.8;
 import "./Owned.sol";
 import "./EntryChannel.sol";
 import "./EntryQueueLib.sol";
+import "./ServicesI.sol";
 
 /**
  * A single market represents a market for entering into a 2 party contract.
@@ -33,6 +34,7 @@ contract Queue is Owned {
     string constant EMITTER_DOLLARTOKEN_FUNCTION = "emitBackingValue(address)";
     string constant BENEFICIARY_DOLLARTOKEN_FUNCTION = "purchaseDollars(address)";
 
+    address public servicesAddress;
     address public dollarToken;             // DollarToken contract
     address public emitterChannel;            // ether guy enters queue here
     address public beneficiaryChannel;           // dollar guy enters queue here
@@ -67,8 +69,9 @@ contract Queue is Owned {
      *  Functions
      */
 
-    function Queue(address _dollarToken) {
-        dollarToken = _dollarToken;
+    function Queue(address _servicesAddress) {
+        ServicesI services = ServicesI(_servicesAddress);
+        setDollarToken(services.serviceAddress(sha3("DollarToken")));
         emitterChannel = new EntryChannel(dollarToken, EMITTER_DOLLARTOKEN_FUNCTION);
         beneficiaryChannel = new EntryChannel(dollarToken, BENEFICIARY_DOLLARTOKEN_FUNCTION);
         emitterQueue.init();
@@ -78,7 +81,7 @@ contract Queue is Owned {
 
     /**
      * @dev Change the DollarToken contract address
-     
+
      * NOTE: caller would also need to update the EntryChannel receivers.
      * TODO: look at updating EntryChannels here in the same transaction or even
      *          changing to use a service registry or similar.

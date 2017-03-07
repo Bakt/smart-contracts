@@ -1,10 +1,11 @@
 pragma solidity ^0.4.8;
 
 import "./Owned.sol";
-import "./FactoryStub.sol";
+import "./Factory.sol";
 import "./ContractStore.sol";
-import "./ExchangeRateStub.sol";
+import "./ExchangeRate.sol";
 import "./Queue.sol";
+import "./ServicesI.sol";
 
 contract DollarToken is Owned {
 
@@ -17,11 +18,12 @@ contract DollarToken is Owned {
     /*
      *  Data
      */
-    address public matcher;         // authorized match maker
+    address public servicesAddress;
     address public contractStore;
     address public factory;
     address public exchangeRate;
     address public queue;
+    address public matcher;         // authorized match maker
 
 
     /*
@@ -47,36 +49,11 @@ contract DollarToken is Owned {
      *  Functions
      */
 
-    function DollarToken(
-        address _contractStore,
-        address _factory,
-        address _exchangeRate,
-        address _queue,
-        address _matcher)
-    {
-        setContractStore(_contractStore);
-        setFactory(_factory);
-        setExchangeRate(_exchangeRate);
-        setQueue(_queue);
-        setMatcher(_matcher);  // for now just make the matcher the creater
-    }
-
-    function setContractStore(address _contractStore)
-        onlyOwner
-    {
-        contractStore = _contractStore;
-    }
-
-    function setFactory(address _factory)
-        onlyOwner
-    {
-        factory = _factory;
-    }
-
-    function setExchangeRate(address _exchangeRate)
-        onlyOwner
-    {
-        exchangeRate = _exchangeRate;
+    function DollarToken(address _servicesAddress) {
+        ServicesI services = ServicesI(_servicesAddress);
+        contractStore = services.serviceAddress(sha3("ContractStore"));
+        factory = services.serviceAddress(sha3("Factory"));
+        exchangeRate = services.serviceAddress(sha3("ExchangeRate"));
     }
 
     function setQueue(address _queue)
@@ -136,7 +113,7 @@ contract DollarToken is Owned {
                                     beneValue : emitValue;
 
         // Round to dollar and calculate
-        uint weiDollar = ExchangeRateStub(exchangeRate).weiPerCent() * 100;
+        uint weiDollar = ExchangeRate(exchangeRate).weiPerCent() * 100;
         uint notionalValue = (valueUnrounded / weiDollar) * weiDollar;
         uint valueTotal = notionalValue * 2;
 
@@ -151,7 +128,7 @@ contract DollarToken is Owned {
         }*/
 
         // Create contract:
-        newContract = FactoryStub(factory).createBackedValueContract.value(valueTotal)(
+        newContract = Factory(factory).createBackedValueContract.value(valueTotal)(
              emitAccount,
              beneAccount,
              notionalValue

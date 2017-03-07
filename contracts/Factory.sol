@@ -16,12 +16,10 @@ contract Factory {
         uint notionalCents
     );
 
-    function createBackedValueContract(address beneficiary, uint notionalCents)
+    function createBackedValueContract(address emitter, address beneficiary, uint notionalCents)
         payable
         returns (address)
     {
-        var emitter = msg.sender;
-
         address bvc = new BackedValueContract(
             servicesAddress, emitter, beneficiary, notionalCents
         );
