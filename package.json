@@ -27,6 +27,8 @@
     "co": "^4.6.0",
     "mocha-generators": "^1.2.0",
     "requestify": "^0.2.5",
+    "solc": "^0.4.9",
+    "truffle-contract": "^1.1.10",
     "truffle-default-builder": "^1.0.3"
   }
 }
