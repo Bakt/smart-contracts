@@ -7,11 +7,13 @@
     "test": "test"
   },
   "scripts": {
+    "build": "webpack",
+    "dev": "webpack-dev-server",
     "test": "truffle test"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/CyberNano/dollar_token.git"
+    "url": "git+https://github.com/bakt/smart-contracts.git"
   },
   "keywords": [
     "ethereum",
@@ -20,15 +22,19 @@
   "author": "Felix Watkins and g. nicholas d'andrea",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/CyberNano/dollar_token/issues"
+    "url": "https://github.com/bakt/smart-contracts/issues"
   },
-  "homepage": "https://github.com/CyberNano/dollar_token#readme",
+  "homepage": "https://github.com/bakt/smart-contracts#readme",
   "devDependencies": {
     "co": "^4.6.0",
     "mocha-generators": "^1.2.0",
     "requestify": "^0.2.5",
     "solc": "^0.4.9",
     "truffle-contract": "^1.1.10",
-    "truffle-default-builder": "^1.0.3"
+    "truffle-default-builder": "^1.0.3",
+    "copy-webpack-plugin": "^4.0.1",
+    "html-webpack-plugin": "^2.28.0",
+    "webpack": "^2.2.1",
+    "webpack-dev-server": "^2.3.0"
   }
 }
