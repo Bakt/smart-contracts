@@ -9,10 +9,11 @@ module.exports = {
             port: 8545,
             network_id: "*"
         },
-        "ropsten": {
-            host: "parity-ropsten",
+        "testnet": {
+            host: "parity-testnet",
             port: 8545,
-            network_id: 3
+            network_id: 42,
+            gas: 4000000
         }
     },
 };
