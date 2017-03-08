@@ -1,63 +1,66 @@
+'use strict'
+
 // Import the page's CSS. Webpack will know what to do with it.
 import "../stylesheets/app.css"
 
 import { default as Web3 } from 'web3'
 import { default as contract } from 'truffle-contract'
 
-import queueJSON from '../../build/contracts/Queue.json'
-var Queue = contract(queueJSON)
+// const SERVICES_ADDR = "0x60b1a811f5ea71806bb3bc0e5b74920eeae91913"
+//
+// import servicesJSON from '../../build/contracts/Services.json'
+// const Services = contract(servicesJSON)
 
-var accounts
-var account
+// TODO: get this from services:
+const QUEUE_ADDR = "0x693f5b3a5d25db8c0c78b4e8f5f27026a820485f"
+import queueJSON from '../../build/contracts/Queue.json'
+const Queue = contract(queueJSON)
+
+let queue
+let accounts
+let account
 
 window.App = {
   start: function() {
-    var self = this
+    let self = this
 
     // Bootstrap the Queue abstraction for Use.
+    // Services.setProvider(web3.currentProvider)
     Queue.setProvider(web3.currentProvider)
+    Queue.at(QUEUE_ADDR).then((instance) => {
+        queue = instance
 
-    // Get the initial account balance so it can be displayed.
-    web3.eth.getAccounts(function(err, accs) {
-      if (err != null) {
-        alert("There was an error fetching your accounts.")
-        return
-      }
+        web3.eth.getAccounts(function(err, accs) {
+          if (err != null) {
+            alert("There was an error fetching your accounts.")
+            return
+          }
 
-      if (accs.length == 0) {
-        alert("Couldn't get any accounts! Make sure your Ethereum client is configured correctly.")
-        return
-      }
+          if (accs.length == 0) {
+            alert("Couldn't get any accounts! Make sure your Ethereum client is configured correctly.")
+            return
+          }
 
-      accounts = accs
-      account = accounts[0]
+          accounts = accs
+          account = accounts[0]
 
-      self.refreshBalance()
+          self.refreshAll()
+        })
     })
+    // Get the initial account balance so it can be displayed.
   },
 
-  setStatus: function(message) {
-    var status = document.getElementById("status")
-    status.innerHTML = message
-  },
-
-  refreshLengths: function() {
-    var self = this
-
-    var queue
-    Queue.deployed().then(function(instance) {
-      queue = instance
-      return queue.lengthEmitter.call()
-    }).then(function(value) {
-      var lenEl = document.getElementById("emit-length")
+  refreshAll: function() {
+    queue.lengthEmitter.call().then((value) => {
+      let lenEl = document.getElementById("emit-length")
       lenEl.innerHTML = value.valueOf()
       return queue.lengthBeneficiary.call()
-    }).then(function(value) {
-      var lenEl = document.getElementById("bene-length")
+  }).then((value) => {
+      let lenEl = document.getElementById("bene-length")
       lenEl.innerHTML = value.valueOf()
     }).catch(function(e) {
       console.log(e)
-      self.setStatus("Error getting lengths see log.")
+      alert(e)
     })
   }
 }
