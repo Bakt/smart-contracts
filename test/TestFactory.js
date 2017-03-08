@@ -33,8 +33,8 @@ contract("Factory", function(accounts) {
 
         // action
         yield factory.createBackedValueContract(
-            beneficiary, notionalCents,
-            {value: minimumWeiForCents(notionalCents), from: emitter}
+            emitter, beneficiary, notionalCents,
+            {value: minimumWeiForCents(notionalCents)}
         );
 
         var log = yield fetchEvent(factory.NewBackedValueContract());
@@ -63,4 +63,3 @@ contract("Factory", function(accounts) {
 
     });
 });
-
