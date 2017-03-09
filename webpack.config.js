@@ -1,5 +1,6 @@
-const path = require('path');
-const CopyWebpackPlugin = require('copy-webpack-plugin');
+const path = require('path')
+const webpack = require("webpack")
+const CopyWebpackPlugin = require('copy-webpack-plugin')
 
 module.exports = {
     entry: './app/javascripts/app.js',
@@ -7,17 +8,20 @@ module.exports = {
         path: path.resolve(__dirname, 'build'),
         filename: 'app.js'
     },
-    plugins: [// Copy our app's index.html to the build folder.
+    plugins: [
+        new webpack.ProvidePlugin({
+            Web3: 'web3'
+        }),
         new CopyWebpackPlugin([
             {
                 from: './app/index.html',
                 to: "index.html"
-            },
-            {
+            }, {
                 from: './app/config.json',
                 to: "config.json"
             }
-        ])],
+        ])
+    ],
     module: {
         rules: [
             {
@@ -25,5 +29,5 @@ module.exports = {
                 use: ['style-loader', 'css-loader']
             }
         ]
-    }
+    },
 }

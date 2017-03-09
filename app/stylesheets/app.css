@@ -1,52 +1,34 @@
 body {
-  margin-left: 25%;
-  margin-right: 25%;
-  margin-top: 10%;
   font-family: "Open Sans", sans-serif;
-}
-
-label {
-  display: inline-block;
-  width: 100px;
-}
-
-input {
-  width: 500px;
-  padding: 5px;
-  font-size: 16px;
-}
-
-button {
-  font-size: 16px;
-  padding: 5px;
-}
-
-h1, h2 {
-  display: inline-block;
-  vertical-align: middle;
-  margin-top: 0px;
-  margin-bottom: 10px;
-}
-
-h2 {
-  color: #AAA;
-  font-size: 32px;
-}
-
-h3 {
   font-weight: normal;
-  color: #AAA;
-  font-size: 24px;
 }
 
-.black {
-  color: black;
+footer {
+  margin-top: 70px;
+  margin-bottom: 20px;
+  font-size: 11px;
+  text-align: center;
 }
 
-#balance {
-  color: black;
+*[id^='page-'] {
+  margin-left: 50px;
+  margin-right: 50px;
 }
 
-.hint {
-  color: #666;
+*[id^='page-'] h2 {
+  margin-bottom: 30px;
+}
+
+.row-label {
+  font-weight: 600;
+}
+
+.navbar-brand {
+  padding-left: 50px;
+  padding-right: 50px;
+}
+
+*[class$='-loading'] {
+  font-size:25px;
+  padding:10px;
 }

@@ -2,6 +2,9 @@
     "network": "development",
     "testnet": {
         "services": "0x60b1a811f5ea71806bb3bc0e5b74920eeae91913",
-        "endpoint": "http://52.220.140.30:8545"
+        "endpoint": "http://?.?.?.?:8545"
+    },
+    "development": {
+        "endpoint": "http://localhost:8545"
     }
 }
