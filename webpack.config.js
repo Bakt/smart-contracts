@@ -12,6 +12,10 @@ module.exports = {
             {
                 from: './app/index.html',
                 to: "index.html"
+            },
+            {
+                from: './app/config.json',
+                to: "config.json"
             }
         ])],
     module: {
