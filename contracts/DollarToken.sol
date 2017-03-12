@@ -44,12 +44,12 @@ contract DollarToken is Owned {
         _;
     }
 
-
     /*
      *  Functions
      */
 
     function DollarToken(address _servicesAddress) {
+        servicesAddress = _servicesAddress;
         ServicesI services = ServicesI(_servicesAddress);
         contractStore = services.serviceAddress(sha3("ContractStore"));
         factory = services.serviceAddress(sha3("Factory"));
@@ -137,4 +137,14 @@ contract DollarToken is Owned {
         ContractStore(contractStore).add(newContract);
     }
 
+    /**
+     * Internal functions
+     */
+    function serviceAddress(string name)
+        constant
+        internal
+        returns (address)
+    {
+        return ServicesI(servicesAddress).serviceAddress(sha3(name));
+    }
 }
