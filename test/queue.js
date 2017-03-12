@@ -47,13 +47,13 @@ contract('Queue', (accounts) => {
                      from: PARTY1,
                      to: dChannel,
                      value: weiP1,
-                     gas: 200000
+                     gas: 500000
                 }),
                 web3.eth.sendTransaction({
                      from: PARTY2,
                      to: eChannel,
                      value: weiP2,
-                     gas: 200000
+                     gas: 500000
                 })
             ])
         }).then((result) => {

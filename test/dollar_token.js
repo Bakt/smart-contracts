@@ -166,13 +166,13 @@ contract('DollarToken', (accounts) => {
                      from: PARTY1,
                      to: bChannel,
                      value: ONE_DOLLAR,
-                     gas: 200000
+                     gas: 500000
                 }),
                 web3.eth.sendTransaction({
                      from: PARTY2,
                      to: eChannel,
                      value: ONE_DOLLAR,
-                     gas: 200000
+                     gas: 500000
                 })
             ])
         }).then((res) => {
