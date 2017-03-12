@@ -77,7 +77,7 @@ contract DollarToken is Owned {
     {
         // TODO:
         //  receiveFee
-        //  allowWithdrawal
+        reserveFor(_emitterAddr);
         Queue(queue).addEmitter(_emitterAddr, msg.value);
     }
 
@@ -88,7 +88,7 @@ contract DollarToken is Owned {
     {
         // TODO:
         //  receiveFee
-        //  allowWithdrawal
+        reserveFor(_beneficiaryAddr);
         Queue(queue).addBeneficiary(_beneficiaryAddr, msg.value);
     }
 
