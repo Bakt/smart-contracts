@@ -5,6 +5,7 @@ import "./Factory.sol";
 import "./ContractStore.sol";
 import "./ExchangeRate.sol";
 import "./Queue.sol";
+import "./WithdrawalsReserves.sol";
 import "./ServicesI.sol";
 
 contract DollarToken is Owned {
@@ -43,6 +44,7 @@ contract DollarToken is Owned {
         if (msg.sender != Queue(queue).beneficiaryChannel()) { throw; }
         _;
     }
+
 
     /*
      *  Functions
@@ -88,6 +90,16 @@ contract DollarToken is Owned {
         //  receiveFee
         //  allowWithdrawal
         Queue(queue).addBeneficiary(_beneficiaryAddr, msg.value);
+    }
+
+    function reserveFor(address _participant)
+        payable
+    {
+        address reserves = serviceAddress("WithdrawalsReserves");
+
+        WithdrawalsReserves(reserves).reserve.value(msg.value)(
+            _participant
+        );
     }
 
     /**
