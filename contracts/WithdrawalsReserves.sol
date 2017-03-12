@@ -53,4 +53,27 @@ contract WithdrawalsReserves is Owned {
 
         Withdraw(participant, sent);
     }
+
+    function transfer(
+        uint _amount,
+        address _from,
+        address _contractAddress,
+        bytes32 _funcSigHash)
+        fromFactory
+        returns (uint sent)
+    {
+        uint originalBalance = balances[_from];
+
+        if (originalBalance < _amount) throw;
+
+        // re-entry protection
+        balances[_from] = 0;
+
+        if (!_contractAddress.call.value(_amount)(bytes4(_funcSigHash))) throw;
+
+        uint newBalance = originalBalance.flooredSub(_amount);
+        balances[_from] = newBalance;
+
+        Transfer(_from, _amount);
+    }
 }

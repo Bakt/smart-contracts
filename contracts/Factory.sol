@@ -1,6 +1,7 @@
 pragma solidity ^0.4.8;
 
 import "./BackedValueContract.sol";
+import "./WithdrawalsReserves.sol";
 
 contract Factory {
     address servicesAddress;
@@ -16,15 +17,30 @@ contract Factory {
         uint notionalCents
     );
 
-    function createBackedValueContract(address emitter, address beneficiary, uint notionalCents)
-        payable
+    function createBackedValueContract(
+        address emitter,
+        address beneficiary,
+        uint notionalCents,
+        uint participantWei
+    )
         returns (address)
     {
         address bvc = new BackedValueContract(
             servicesAddress, emitter, beneficiary, notionalCents
         );
 
-        BackedValueContract(bvc).deposit.value(msg.value)();
+        ServicesI services = ServicesI(servicesAddress);
+        address reservesAddress = services.serviceAddress(
+            sha3("WithdrawalsReserves")
+        );
+
+        WithdrawalsReserves(reservesAddress).transfer(
+            participantWei, emitter, bvc, sha3("deposit()")
+        );
+
+        WithdrawalsReserves(reservesAddress).transfer(
+            participantWei, beneficiary, bvc, sha3("deposit()")
+        );
 
         NewBackedValueContract(
             bvc, emitter, beneficiary, notionalCents

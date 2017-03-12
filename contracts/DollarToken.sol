@@ -13,7 +13,7 @@ contract DollarToken is Owned {
     /*
      *  Events
      */
-    event ContractCreated(address newContract, uint notionalValue);
+    event ContractCreated(address newContract, uint notionalCents);
 
 
     /*
@@ -121,13 +121,23 @@ contract DollarToken is Owned {
         var (emitAccount, emitValue, ) = Queue(queue).getEntryEmitter(_emitterEntryId);
 
         // Contract value is the lowest of the 2
-        uint valueUnrounded = (emitValue > beneValue) ?
+        uint participantAmount = (emitValue > beneValue) ?
                                     beneValue : emitValue;
 
         // Round to dollar and calculate
-        uint weiDollar = ExchangeRate(exchangeRate).weiPerCent() * 100;
-        uint notionalValue = (valueUnrounded / weiDollar) * weiDollar;
-        uint valueTotal = notionalValue * 2;
+        uint weiPerCent = ExchangeRate(exchangeRate).weiPerCent();
+
+        // wei:             1 500 000 000 000 000 000
+        // ethPerCent:                          2 133
+        // weiPerCent             468 823 253 633 380
+        //
+        // wei / (wei / cents) = cents
+        //
+        // wei -> cents
+        // wei * cents / eth * eth / wei =
+        uint notionalCents = participantAmount / weiPerCent;
+
+        uint valueTotal = participantAmount * 2;
 
         /* WILL BE REPLACED WITH WITHDRAW PATTERN AND WITHDRAW CONTRACT */
 
@@ -140,12 +150,13 @@ contract DollarToken is Owned {
         }*/
 
         // Create contract:
-        newContract = Factory(factory).createBackedValueContract.value(valueTotal)(
+        newContract = Factory(factory).createBackedValueContract(
              emitAccount,
              beneAccount,
-             notionalValue
+             notionalCents,
+             participantAmount
         );
-        ContractCreated(newContract, notionalValue);
+        ContractCreated(newContract, notionalCents);
         ContractStore(contractStore).add(newContract);
     }
 
