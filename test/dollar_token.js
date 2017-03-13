@@ -1,17 +1,21 @@
 'use strict'
 
+require('mocha-generators').install();
+
 const BigNumber = require('bignumber.js')
 
 const DollarToken = artifacts.require("./DollarToken.sol")
+const ExchangeRate = artifacts.require("./ExchangeRate.sol")
 const Queue = artifacts.require("./Queue.sol")
 const ContractStore = artifacts.require("./ContractStore.sol")
-const ExchangeRateStub = artifacts.require("./ExchangeRateStub.sol")
+const WithdrawalsReserves = artifacts.require("./WithdrawalsReserves.sol")
 
 const GAS_PRICE = 100000000000 // truffle / testrpc fixed gas price
 const ETH_PRICE = 12.80
 const WEI_PER_DOLLAR = web3.toWei(new BigNumber(1), 'ether').dividedBy(ETH_PRICE)
 const ONE_DOLLAR = WEI_PER_DOLLAR
 
+const { cents } = require('./helpers')
 const bal = (addr) => { return web3.eth.getBalance(addr).toNumber() }
 const balBigNumber = (addr) => { return web3.eth.getBalance(addr) }
 const gas = (receipt) => { return receipt.gasUsed * GAS_PRICE }
@@ -24,10 +28,17 @@ contract('DollarToken', (accounts) => {
     it("should handle full life cycle", (done) => {
         let newAddr
         let eEntry, bEntry
-        let dt, queue
+        let dt, queue, exchangeRate
 
         DollarToken.deployed().then((c) => {
             dt = c
+            return ExchangeRate.deployed()
+        }).then((c) => {
+            exchangeRate = c
+            return exchangeRate.receiveExchangeRate(
+                cents(1000), {from: MATCHER_ACCOUNT}
+            );
+        }).then(() => {
             return Queue.deployed()
         }).then((c) => {
             queue = c
@@ -130,6 +141,20 @@ contract('DollarToken', (accounts) => {
         })
     })
 
+    it("should allow value reservations for a participant", function* () {
+      let dollarToken = yield DollarToken.deployed();
+      let reservedAmount = web3.toBigNumber(web3.toWei('0.1', 'ether'));
+      let reserves = yield WithdrawalsReserves.deployed();
+
+      let originalBalance = yield reserves.balances(PARTY1);
+      let expectedBalance = originalBalance.plus(reservedAmount);
+
+      let result = yield dollarToken.reserveFor(PARTY1, {value: reservedAmount});
+
+      let actualBalance = yield reserves.balances(PARTY1);
+      assert.equal(actualBalance.toString(), expectedBalance.toString());
+    });
+
     function createEntries(queue) {
         return Promise.all([
             queue.emitterChannel.call(),
@@ -141,13 +166,13 @@ contract('DollarToken', (accounts) => {
                      from: PARTY1,
                      to: bChannel,
                      value: ONE_DOLLAR,
-                     gas: 200000
+                     gas: 500000
                 }),
                 web3.eth.sendTransaction({
                      from: PARTY2,
                      to: eChannel,
                      value: ONE_DOLLAR,
-                     gas: 200000
+                     gas: 500000
                 })
             ])
         }).then((res) => {

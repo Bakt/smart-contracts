@@ -19,7 +19,6 @@ contract BackedValueContract {
 
     State state = State.Pending;
 
-    event Pending();
     event Active();
 
     event Deposit(uint weiDeposited);
@@ -202,8 +201,6 @@ contract BackedValueContract {
             Active();
             return;
         }
-
-        Pending();
     }
 
     modifier onlyParticipants() {
