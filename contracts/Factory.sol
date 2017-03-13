@@ -4,6 +4,8 @@ import "./BackedValueContract.sol";
 import "./WithdrawalsReserves.sol";
 
 contract Factory {
+    bytes32 constant DEPOSIT_SHA = sha3("deposit()");
+
     address servicesAddress;
 
     function Factory(address _servicesAddress) {
@@ -30,16 +32,13 @@ contract Factory {
         );
 
         ServicesI services = ServicesI(servicesAddress);
-        address reservesAddress = services.serviceAddress(
-            sha3("WithdrawalsReserves")
+
+        WithdrawalsReserves(services.WITHDRAWALS_RESERVES()).transfer(
+            participantWei, emitter, bvc, DEPOSIT_SHA
         );
 
-        WithdrawalsReserves(reservesAddress).transfer(
-            participantWei, emitter, bvc, sha3("deposit()")
-        );
-
-        WithdrawalsReserves(reservesAddress).transfer(
-            participantWei, beneficiary, bvc, sha3("deposit()")
+        WithdrawalsReserves(services.WITHDRAWALS_RESERVES()).transfer(
+            participantWei, beneficiary, bvc, DEPOSIT_SHA
         );
 
         NewBackedValueContract(

@@ -21,14 +21,14 @@ contract WithdrawalsReserves is Owned {
     event Withdraw(address participant, uint amount);
     event Transfer(address participant, uint amount);
 
+
     function WithdrawalsReserves(address _servicesAddress) {
         servicesAddress = _servicesAddress;
     }
 
     modifier fromFactory() {
         ServicesI services = ServicesI(servicesAddress);
-        address factoryAddress = services.serviceAddress(sha3("Factory"));
-        if (msg.sender != factoryAddress) { throw; }
+        if (msg.sender != services.FACTORY()) { throw; }
         _;
     }
 
