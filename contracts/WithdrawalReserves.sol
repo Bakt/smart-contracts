@@ -41,17 +41,20 @@ contract WithdrawalReserves is Owned {
 
     function withdraw() {
         address participant = msg.sender;
-        uint amount = balances[participant];
+        uint balance = balances[participant];
+
+        if (balance == 0) {
+            return;
+        }
 
         // re-entry protection
         balances[participant] = 0;
 
-        uint sent = participant.safeSend(amount);
-
-        uint newBalance = amount.flooredSub(sent);
-        balances[participant] = newBalance;
-
-        Withdraw(participant, sent);
+        if(participant.send(balance)) {
+            Withdraw(participant, balance);
+        } else {
+            balances[participant] = balance;
+        }
     }
 
     function transfer(
