@@ -4,7 +4,7 @@ var { cents } = require('./helpers');
 
 var ExchangeRate = artifacts.require("ExchangeRate.sol");
 var Factory = artifacts.require("Factory.sol");
-var WithdrawalsReserves = artifacts.require("WithdrawalsReserves.sol");
+var WithdrawalReserves = artifacts.require("WithdrawalReserves.sol");
 var BackedValueContract = artifacts.require("BackedValueContract");
 
 contract("Factory", function(accounts) {
@@ -31,7 +31,7 @@ contract("Factory", function(accounts) {
         // setup
         var notionalCents = cents(10);
         var factory = yield Factory.deployed();
-        var reserves = yield WithdrawalsReserves.deployed();
+        var reserves = yield WithdrawalReserves.deployed();
 
         var participantWei = notionalCents.times(weiPerCent);
 

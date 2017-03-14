@@ -67,9 +67,9 @@ contract Services is ServicesI, ExchangeRateCallbackI {
         return serviceAddress(_EXCHANGE_RATE);
     }
 
-    bytes32 public _WITHDRAWALS_RESERVES = sha3("WithdrawalsReserves");
-    function withdrawalsReserves() constant returns (address) {
-        return serviceAddress(_WITHDRAWALS_RESERVES);
+    bytes32 public _WITHDRAWAL_RESERVES = sha3("WithdrawalReserves");
+    function withdrawalReserves() constant returns (address) {
+        return serviceAddress(_WITHDRAWAL_RESERVES);
     }
 
     bytes32 public _FACTORY = sha3("Factory");

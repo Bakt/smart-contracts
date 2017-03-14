@@ -1,7 +1,7 @@
 pragma solidity ^0.4.8;
 
 import "./BackedValueContract.sol";
-import "./WithdrawalsReserves.sol";
+import "./WithdrawalReserves.sol";
 
 contract Factory {
     bytes32 constant DEPOSIT_SHA = sha3("deposit()");
@@ -33,11 +33,11 @@ contract Factory {
 
         ServicesI services = ServicesI(servicesAddress);
 
-        WithdrawalsReserves(services.withdrawalsReserves()).transfer(
+        WithdrawalReserves(services.withdrawalReserves()).transfer(
             participantWei, emitter, bvc, DEPOSIT_SHA
         );
 
-        WithdrawalsReserves(services.withdrawalsReserves()).transfer(
+        WithdrawalReserves(services.withdrawalReserves()).transfer(
             participantWei, beneficiary, bvc, DEPOSIT_SHA
         );
 

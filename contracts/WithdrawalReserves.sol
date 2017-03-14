@@ -9,7 +9,7 @@ import "./vendor/SafeSendLib.sol";
  * includes: requested withdrawals (emitter excess), contract values after
  *           dissolution, participant funds before match
  */
-contract WithdrawalsReserves is Owned {
+contract WithdrawalReserves is Owned {
     using MathLib for uint;
     using SafeSendLib for address;
 
@@ -22,7 +22,7 @@ contract WithdrawalsReserves is Owned {
     event Transfer(address participant, uint amount);
 
 
-    function WithdrawalsReserves(address _servicesAddress) {
+    function WithdrawalReserves(address _servicesAddress) {
         servicesAddress = _servicesAddress;
     }
 

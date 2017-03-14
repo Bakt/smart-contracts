@@ -5,7 +5,7 @@ import "./Factory.sol";
 import "./ContractStore.sol";
 import "./ExchangeRate.sol";
 import "./Queue.sol";
-import "./WithdrawalsReserves.sol";
+import "./WithdrawalReserves.sol";
 import "./ServicesI.sol";
 
 contract DollarToken is Owned {
@@ -98,7 +98,7 @@ contract DollarToken is Owned {
     {
         ServicesI services = ServicesI(servicesAddress);
 
-        WithdrawalsReserves(services.withdrawalsReserves()).reserve.value(msg.value)(
+        WithdrawalReserves(services.withdrawalReserves()).reserve.value(msg.value)(
             _participant
         );
     }

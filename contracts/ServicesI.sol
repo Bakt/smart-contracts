@@ -4,7 +4,7 @@ contract ServicesI {
     function dollarToken() constant returns (address);
     function oraclizeFacade() constant returns (address);
     function exchangeRate() constant returns (address);
-    function withdrawalsReserves() constant returns (address);
+    function withdrawalReserves() constant returns (address);
     function factory() constant returns (address);
     function contractStore() constant returns (address);
 
