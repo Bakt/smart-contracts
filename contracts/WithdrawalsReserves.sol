@@ -28,7 +28,7 @@ contract WithdrawalsReserves is Owned {
 
     modifier fromFactory() {
         ServicesI services = ServicesI(servicesAddress);
-        if (msg.sender != services.FACTORY()) { throw; }
+        if (msg.sender != services.factory()) { throw; }
         _;
     }
 

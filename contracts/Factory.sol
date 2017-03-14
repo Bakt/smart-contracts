@@ -33,11 +33,11 @@ contract Factory {
 
         ServicesI services = ServicesI(servicesAddress);
 
-        WithdrawalsReserves(services.WITHDRAWALS_RESERVES()).transfer(
+        WithdrawalsReserves(services.withdrawalsReserves()).transfer(
             participantWei, emitter, bvc, DEPOSIT_SHA
         );
 
-        WithdrawalsReserves(services.WITHDRAWALS_RESERVES()).transfer(
+        WithdrawalsReserves(services.withdrawalsReserves()).transfer(
             participantWei, beneficiary, bvc, DEPOSIT_SHA
         );
 

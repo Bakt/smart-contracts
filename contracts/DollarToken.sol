@@ -54,9 +54,9 @@ contract DollarToken is Owned {
         servicesAddress = _servicesAddress;
         ServicesI services = ServicesI(_servicesAddress);
 
-        contractStore = services.CONTRACT_STORE();
-        factory = services.FACTORY();
-        exchangeRate = services.EXCHANGE_RATE();
+        contractStore = services.contractStore();
+        factory = services.factory();
+        exchangeRate = services.exchangeRate();
     }
 
     function setQueue(address _queue)
@@ -98,7 +98,7 @@ contract DollarToken is Owned {
     {
         ServicesI services = ServicesI(servicesAddress);
 
-        WithdrawalsReserves(services.WITHDRAWALS_RESERVES()).reserve.value(msg.value)(
+        WithdrawalsReserves(services.withdrawalsReserves()).reserve.value(msg.value)(
             _participant
         );
     }

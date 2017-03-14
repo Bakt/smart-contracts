@@ -215,6 +215,6 @@ contract BackedValueContract {
     function updateServices(address _servicesAddress) internal {
         ServicesI services = ServicesI(_servicesAddress);
 
-        exchangeRate = ExchangeRate(services.EXCHANGE_RATE());
+        exchangeRate = ExchangeRate(services.exchangeRate());
     }
 }
