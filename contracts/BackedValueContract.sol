@@ -43,8 +43,6 @@ contract BackedValueContract {
                                  address _emitter,
                                  address _beneficiary,
                                  uint _notionalCents)
-        checkMargin
-        payable
     {
         services = ServicesI(_servicesAddress);
 
@@ -55,7 +53,17 @@ contract BackedValueContract {
 
     function () { }
 
-    function deposit() checkMargin payable {
+    function deposit() payable {
+    }
+
+    function activate()
+        withEnoughWei
+        whenPending
+    {
+        notionalCents = pendingNotionalCents;
+        pendingNotionalCents = 0;
+        state = State.Active;
+        Active();
     }
 
 
@@ -177,39 +185,29 @@ contract BackedValueContract {
      * Modifiers
      */
 
-    modifier checkMargin() {
-        _;
+    modifier onlyParticipants() {
+        if (msg.sender == emitter || msg.sender == beneficiary) _;
+    }
 
+
+    modifier whenPending() {
+        if (state == State.Pending) _;
+    }
+
+    modifier withEnoughWei() {
         // exchangeRate    wei / cent
         // msg.value       wei
         //
         // maximum notional value:
         // exchangeRate / msg.value / INITIAL_MARGIN_REQUIREMENT :: cents
         //
-        if (state == State.Active) {
-            return;
-        }
-
-        ExchangeRate exchangeRate = ExchangeRate(services.exchangeRate());
-
         uint providedWei = this.balance;
-        uint weiPerCent = exchangeRate.weiPerCent();
-
+        uint weiPerCent = ExchangeRate(services.exchangeRate()).weiPerCent();
         uint providedCents = providedWei / weiPerCent;
-
         uint maximumNotionalCents = providedCents / INITIAL_MINIMUM_MARGIN_RATIO;
 
-        if (pendingNotionalCents > 0 && pendingNotionalCents <= maximumNotionalCents) {
-            notionalCents = pendingNotionalCents;
-            pendingNotionalCents = 0;
-            state = State.Active;
-            Active();
-            return;
+        if (pendingNotionalCents <= maximumNotionalCents) {
+            _;
         }
     }
-
-    modifier onlyParticipants() {
-        if (msg.sender == emitter || msg.sender == beneficiary) _;
-    }
-
 }

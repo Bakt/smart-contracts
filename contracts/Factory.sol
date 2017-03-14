@@ -41,6 +41,8 @@ contract Factory {
             participantWei, beneficiary, bvc, DEPOSIT_SHA
         );
 
+        BackedValueContract(bvc).activate();
+
         NewBackedValueContract(
             bvc, emitter, beneficiary, notionalCents
         );
