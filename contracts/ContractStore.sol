@@ -19,10 +19,11 @@ contract ContractStore is Owned {
         bool exists;
     }
 
-    mapping (address => Contract) contracts;
+    // TODO: revisit these data structures - for now this is a simple set of
+    //       of structures for testing
 
-    // TODO: change to set of open contacts - for now this is a simple way to
-    //       pull out list for testing
+    mapping (address => Contract) contracts;
+    mapping (address => address[]) accountsMap;
     address[] contractsArr;
 
     /*
@@ -47,12 +48,14 @@ contract ContractStore is Owned {
 
     }
 
-    function add(address _contract)
+    function add(address _contract, address _account1, address _account2)
         external
         checkNotExists(_contract)
     {
         contracts[_contract] = Contract(true, true);
         contractsArr.push(_contract);
+        accountsMap[_account1].push(_contract);
+        accountsMap[_account2].push(_contract);
     }
 
     function close(address _contract)
@@ -88,6 +91,20 @@ contract ContractStore is Owned {
         returns (address addr)
     {
         addr = contractsArr[idx];
+    }
+
+    function numContractsAccount(address _account)
+        constant
+        returns (uint length)
+    {
+        length = accountsMap[_account].length;
+    }
+
+    function getContractAccount(address _account, uint idx)
+        constant
+        returns (address addr)
+    {
+        addr = accountsMap[_account][idx];
     }
 
 }
