@@ -71,7 +71,7 @@ contract Queue is Owned {
 
     function Queue(address _servicesAddress) {
         ServicesI services = ServicesI(_servicesAddress);
-        setDollarToken(services.serviceAddress(sha3("DollarToken")));
+        setDollarToken(services.dollarToken());
         emitterChannel = new EntryChannel(dollarToken, EMITTER_DOLLARTOKEN_FUNCTION);
         beneficiaryChannel = new EntryChannel(dollarToken, BENEFICIARY_DOLLARTOKEN_FUNCTION);
         emitterQueue.init();

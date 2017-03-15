@@ -35,7 +35,7 @@ contract BackedValueContract {
 
     // withdrawal balances?
 
-    ExchangeRate exchangeRate;
+    ServicesI services;
 
     uint INITIAL_MINIMUM_MARGIN_RATIO = 2;
 
@@ -43,10 +43,8 @@ contract BackedValueContract {
                                  address _emitter,
                                  address _beneficiary,
                                  uint _notionalCents)
-        checkMargin
-        payable
     {
-        updateServices(_servicesAddress);
+        services = ServicesI(_servicesAddress);
 
         emitter = _emitter;
         beneficiary = _beneficiary;
@@ -55,7 +53,17 @@ contract BackedValueContract {
 
     function () { }
 
-    function deposit() checkMargin payable {
+    function deposit() payable {
+    }
+
+    function activate()
+        withEnoughWei
+        whenPending
+    {
+        notionalCents = pendingNotionalCents;
+        pendingNotionalCents = 0;
+        state = State.Active;
+        Active();
     }
 
 
@@ -64,6 +72,7 @@ contract BackedValueContract {
      */
 
     function allowedEmitterWithdrawal() constant returns (uint weiValue) {
+        ExchangeRate exchangeRate = ExchangeRate(services.exchangeRate());
         uint lockedValue = INITIAL_MINIMUM_MARGIN_RATIO
             .safeMultiply(notionalCents)
             .safeMultiply(exchangeRate.weiPerCent());
@@ -87,6 +96,7 @@ contract BackedValueContract {
 
     function currentMargin() constant returns (uint) {
         // 1 * 10**18 = 100% margin on notional value
+        ExchangeRate exchangeRate = ExchangeRate(services.exchangeRate());
 
         uint divisionDecimals = 2;
         uint margin = (
@@ -136,6 +146,7 @@ contract BackedValueContract {
         // 1. withdraw() asserts requested cents <= notionalValue
         // 2. withdraw() calculates wei equivalent
         // 3. withdraw() sends wei to beneficiary
+        ExchangeRate exchangeRate = ExchangeRate(services.exchangeRate());
 
         uint weiPerCent = exchangeRate.weiPerCent();
         uint weiEquivalent = centsValue.safeMultiply(weiPerCent);
@@ -174,47 +185,29 @@ contract BackedValueContract {
      * Modifiers
      */
 
-    modifier checkMargin() {
-        _;
+    modifier onlyParticipants() {
+        if (msg.sender == emitter || msg.sender == beneficiary) _;
+    }
 
+
+    modifier whenPending() {
+        if (state == State.Pending) _;
+    }
+
+    modifier withEnoughWei() {
         // exchangeRate    wei / cent
         // msg.value       wei
         //
         // maximum notional value:
         // exchangeRate / msg.value / INITIAL_MARGIN_REQUIREMENT :: cents
         //
-        if (state == State.Active) {
-            return;
-        }
-
         uint providedWei = this.balance;
-        uint weiPerCent = exchangeRate.weiPerCent();
-
+        uint weiPerCent = ExchangeRate(services.exchangeRate()).weiPerCent();
         uint providedCents = providedWei / weiPerCent;
-
         uint maximumNotionalCents = providedCents / INITIAL_MINIMUM_MARGIN_RATIO;
 
-        if (pendingNotionalCents > 0 && pendingNotionalCents <= maximumNotionalCents) {
-            notionalCents = pendingNotionalCents;
-            pendingNotionalCents = 0;
-            state = State.Active;
-            Active();
-            return;
+        if (pendingNotionalCents <= maximumNotionalCents) {
+            _;
         }
-    }
-
-    modifier onlyParticipants() {
-        if (msg.sender == emitter || msg.sender == beneficiary) _;
-    }
-
-
-    /*
-     * Service Resolution Helper
-     */
-
-    function updateServices(address _servicesAddress) internal {
-        ServicesI services = ServicesI(_servicesAddress);
-
-        exchangeRate = ExchangeRate(services.EXCHANGE_RATE());
     }
 }

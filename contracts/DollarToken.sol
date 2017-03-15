@@ -5,7 +5,7 @@ import "./Factory.sol";
 import "./ContractStore.sol";
 import "./ExchangeRate.sol";
 import "./Queue.sol";
-import "./WithdrawalsReserves.sol";
+import "./WithdrawalReserves.sol";
 import "./ServicesI.sol";
 
 contract DollarToken is Owned {
@@ -53,9 +53,10 @@ contract DollarToken is Owned {
     function DollarToken(address _servicesAddress) {
         servicesAddress = _servicesAddress;
         ServicesI services = ServicesI(_servicesAddress);
-        contractStore = services.serviceAddress(sha3("ContractStore"));
-        factory = services.serviceAddress(sha3("Factory"));
-        exchangeRate = services.serviceAddress(sha3("ExchangeRate"));
+
+        contractStore = services.contractStore();
+        factory = services.factory();
+        exchangeRate = services.exchangeRate();
     }
 
     function setQueue(address _queue)
@@ -95,9 +96,9 @@ contract DollarToken is Owned {
     function reserveFor(address _participant)
         payable
     {
-        address reserves = serviceAddress("WithdrawalsReserves");
+        ServicesI services = ServicesI(servicesAddress);
 
-        WithdrawalsReserves(reserves).reserve.value(msg.value)(
+        WithdrawalReserves(services.withdrawalReserves()).reserve.value(msg.value)(
             _participant
         );
     }

@@ -9,7 +9,7 @@ import "./vendor/SafeSendLib.sol";
  * includes: requested withdrawals (emitter excess), contract values after
  *           dissolution, participant funds before match
  */
-contract WithdrawalsReserves is Owned {
+contract WithdrawalReserves is Owned {
     using MathLib for uint;
     using SafeSendLib for address;
 
@@ -21,14 +21,14 @@ contract WithdrawalsReserves is Owned {
     event Withdraw(address participant, uint amount);
     event Transfer(address participant, uint amount);
 
-    function WithdrawalsReserves(address _servicesAddress) {
+
+    function WithdrawalReserves(address _servicesAddress) {
         servicesAddress = _servicesAddress;
     }
 
     modifier fromFactory() {
         ServicesI services = ServicesI(servicesAddress);
-        address factoryAddress = services.serviceAddress(sha3("Factory"));
-        if (msg.sender != factoryAddress) { throw; }
+        if (msg.sender != services.factory()) { throw; }
         _;
     }
 
@@ -41,17 +41,20 @@ contract WithdrawalsReserves is Owned {
 
     function withdraw() {
         address participant = msg.sender;
-        uint amount = balances[participant];
+        uint balance = balances[participant];
+
+        if (balance == 0) {
+            return;
+        }
 
         // re-entry protection
         balances[participant] = 0;
 
-        uint sent = participant.safeSend(amount);
-
-        uint newBalance = amount.flooredSub(sent);
-        balances[participant] = newBalance;
-
-        Withdraw(participant, sent);
+        if(participant.send(balance)) {
+            Withdraw(participant, balance);
+        } else {
+            balances[participant] = balance;
+        }
     }
 
     function transfer(

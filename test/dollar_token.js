@@ -8,7 +8,7 @@ const DollarToken = artifacts.require("./DollarToken.sol")
 const ExchangeRate = artifacts.require("./ExchangeRate.sol")
 const Queue = artifacts.require("./Queue.sol")
 const ContractStore = artifacts.require("./ContractStore.sol")
-const WithdrawalsReserves = artifacts.require("./WithdrawalsReserves.sol")
+const WithdrawalReserves = artifacts.require("./WithdrawalReserves.sol")
 
 const GAS_PRICE = 100000000000 // truffle / testrpc fixed gas price
 const ETH_PRICE = 12.80
@@ -144,7 +144,7 @@ contract('DollarToken', (accounts) => {
     it("should allow value reservations for a participant", function* () {
       let dollarToken = yield DollarToken.deployed();
       let reservedAmount = web3.toBigNumber(web3.toWei('0.1', 'ether'));
-      let reserves = yield WithdrawalsReserves.deployed();
+      let reserves = yield WithdrawalReserves.deployed();
 
       let originalBalance = yield reserves.balances(PARTY1);
       let expectedBalance = originalBalance.plus(reservedAmount);
