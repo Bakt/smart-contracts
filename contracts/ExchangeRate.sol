@@ -24,7 +24,7 @@ contract ExchangeRate {
     function updateServices(address _servicesAddress) {
         ServicesI services = ServicesI(_servicesAddress);
 
-        oraclize = OraclizeFacade(services.ORACLIZE_FACADE());
+        oraclize = OraclizeFacade(services.oraclizeFacade());
         oraclize.setCallback(this);
 
         receiver = ExchangeRateCallbackI(services);

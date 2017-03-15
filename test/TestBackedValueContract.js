@@ -31,8 +31,10 @@ contract('BackedValueContract', function(accounts) {
         // action
         var bvc = yield BackedValueContract.new(
             services.address, emitter, beneficiary, notionalCents,
-            {value: web3.toBigNumber('0'), from: emitter}
-        );
+            { from: emitter }
+        )
+
+        yield bvc.activate();
 
         // checking result
         var actualBeneficiary = yield bvc.beneficiary();
@@ -67,8 +69,15 @@ contract('BackedValueContract', function(accounts) {
 
         bvc = yield BackedValueContract.new(
             services.address, emitter, beneficiary, notionalCents,
+            { from: emitter }
+        );
+
+        yield bvc.deposit(
             {value: notEnoughWei, from: emitter}
         );
+
+        yield bvc.activate();
+
         actualPendingNotionalCents = yield bvc.pendingNotionalCents();
         assert.equal(
             actualPendingNotionalCents.toString(), notionalCents.toString(),
@@ -88,8 +97,14 @@ contract('BackedValueContract', function(accounts) {
 
         bvc = yield BackedValueContract.new(
             services.address, emitter, beneficiary, notionalCents,
+            { from: emitter }
+        );
+
+        yield bvc.deposit(
             {value: enoughWei, from: emitter}
         );
+
+        yield bvc.activate();
 
         actualNotionalCents = yield bvc.notionalCents();
         assert.equal(
@@ -103,7 +118,7 @@ contract('BackedValueContract', function(accounts) {
         );
     });
 
-    it("should enter active state upon enough wei being sent", function* () {
+    it("should enter active state with enough wei being sent", function* () {
         let notionalCents = cents(100);
         let bvc;
         let currentState;
@@ -113,14 +128,21 @@ contract('BackedValueContract', function(accounts) {
 
         bvc = yield BackedValueContract.new(
             services.address, emitter, beneficiary, notionalCents,
+            { from: emitter }
+        );
+
+        yield bvc.deposit(
             {value: halfEnough, from: emitter}
         );
+        yield bvc.activate();
+
         currentState = yield bvc.currentState();
         assert.equal(currentState.toString(), "pending");
 
         yield bvc.deposit(
             {value: halfEnough.plus(1) /* rounding */, from: emitter}
         );
+        yield bvc.activate();
 
         currentState = yield bvc.currentState();
         assert.equal(currentState.toString(), "active");
@@ -130,11 +152,15 @@ contract('BackedValueContract', function(accounts) {
         let notionalCents = cents(10);
 
         var bvc = yield BackedValueContract.new(
-            services.address, emitter, beneficiary, notionalCents, {
-                value: minimumWeiForCents(notionalCents),
-                from: emitter
-            }
+            services.address, emitter, beneficiary, notionalCents,
+            { from: emitter }
         );
+
+        yield bvc.deposit(
+          { value: minimumWeiForCents(notionalCents), from: emitter }
+        );
+
+        yield bvc.activate();
 
         var failed = false;
         try {
@@ -149,11 +175,15 @@ contract('BackedValueContract', function(accounts) {
         let notionalCents = cents(10);
 
         var bvc = yield BackedValueContract.new(
-            services.address, emitter, beneficiary, notionalCents, {
-                value: minimumWeiForCents(notionalCents),
-                from: emitter
-            }
+            services.address, emitter, beneficiary, notionalCents,
+            { from: emitter }
         );
+
+        yield bvc.deposit(
+            { value: minimumWeiForCents(notionalCents), from: emitter }
+        );
+
+        yield bvc.activate();
 
         yield bvc.withdraw(cents(7), {from: beneficiary});
         remainingNotionalCents = yield bvc.notionalCents();
@@ -171,11 +201,15 @@ contract('BackedValueContract', function(accounts) {
     it("should provide the correct wei equivalent to the beneficiary", function* () {
         let notionalCents = cents(100);
         var bvc = yield BackedValueContract.new(
-            services.address, emitter, beneficiary, notionalCents, {
-                value: minimumWeiForCents(notionalCents),
-                from: emitter
-            }
+            services.address, emitter, beneficiary, notionalCents,
+            { from: emitter }
         );
+
+        yield bvc.deposit(
+            { value: minimumWeiForCents(notionalCents), from: emitter }
+        );
+
+        yield bvc.activate();
 
         let withdrawAmount = cents(50);
         let weiEquivalent = withdrawAmount.times(weiPerCent);
@@ -212,8 +246,14 @@ contract('BackedValueContract', function(accounts) {
 
         var bvc = yield BackedValueContract.new(
             services.address, emitter, beneficiary, notionalCents,
+            { from: emitter }
+        );
+
+        yield bvc.deposit(
             {value: contractWei, from: emitter}
         );
+
+        yield bvc.activate();
 
         var failed = false;
         try {
@@ -231,8 +271,14 @@ contract('BackedValueContract', function(accounts) {
 
         var bvc = yield BackedValueContract.new(
             services.address, emitter, beneficiary, notionalCents,
+            { from: emitter }
+        );
+
+        yield bvc.deposit(
             {value: contractWei, from: emitter}
         );
+
+        yield bvc.activate();
 
         let withdrawAmount = excessAmount.dividedToIntegerBy(2);
 
@@ -286,8 +332,14 @@ contract('BackedValueContract', function(accounts) {
 
         var bvc = yield BackedValueContract.new(
             services.address, emitter, beneficiary, notionalCents,
+            { from: emitter }
+        );
+
+        yield bvc.deposit(
             {value: fullMargin, from: emitter}
         );
+
+        yield bvc.activate();
 
         let actualMargin = yield bvc.currentMargin();
         let expectedMargin = web3.toBigNumber(web3.toWei('1', 'ether'));
@@ -300,8 +352,14 @@ contract('BackedValueContract', function(accounts) {
 
         bvc = yield BackedValueContract.new(
             services.address, emitter, beneficiary, notionalCents,
+            { from: emitter }
+        );
+
+        yield bvc.deposit(
             {value: halfAgain, from: emitter}
         );
+
+        yield bvc.activate();
 
         actualMargin = yield bvc.currentMargin();
         expectedMargin = web3.toBigNumber(web3.toWei('1.5', 'ether'));
