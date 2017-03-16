@@ -10,19 +10,20 @@ import queueJSON from '../../build/contracts/Queue.json'
 import csJSON from '../../build/contracts/ContractStore.json'
 import bvcJSON from '../../build/contracts/BackedValueContract.json'
 
+import truffleJs from '../../truffle'
 import config from '../config.json'
-const networkConfig = config[config.network]
-const endpoint = (networkConfig && networkConfig.endpoint)
-    ? (networkConfig.endpoint)
-    : "http://localhost:8545"
+const netConfig = truffleJs.networks[config.network]
+const endpoint = (netConfig)
+    ? `http://${netConfig.host}:${netConfig.port}`
+    : `http://localhost:8545`
 
 window.App = {
     start: function() {
         const self = this
 
         let servicesAddr
-        if (networkConfig && networkConfig.services) {
-            servicesAddr = networkConfig.services
+        if (netConfig && netConfig.services) {
+            servicesAddr = netConfig.services
         } else if (servicesJSON.networks[web3.version.network].address) {
             servicesAddr = servicesJSON.networks[web3.version.network].address
         } else {
