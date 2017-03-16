@@ -3,10 +3,10 @@ require('mocha-generators').install();
 
 var { fetchEvent } = require('./helpers');
 
-var WithdrawalsReserves = artifacts.require('WithdrawalsReserves.sol');
+var WithdrawalReserves = artifacts.require('WithdrawalReserves.sol');
 
 
-contract("WithdrawalsReserves", function(accounts) {
+contract("WithdrawalReserves", function(accounts) {
   var reserves;
 
   var systemAddress = accounts[0];
@@ -21,7 +21,7 @@ contract("WithdrawalsReserves", function(accounts) {
   });
 
   before(function *() {
-    reserves = yield WithdrawalsReserves.deployed();
+    reserves = yield WithdrawalReserves.deployed();
   });
 
   it("should accept reservations", function* () {
