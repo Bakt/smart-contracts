@@ -8,6 +8,7 @@ import {default as contract} from 'truffle-contract'
 import servicesJSON from '../../build/contracts/Services.json'
 import queueJSON from '../../build/contracts/Queue.json'
 import csJSON from '../../build/contracts/ContractStore.json'
+import bvcJSON from '../../build/contracts/BackedValueContract.json'
 
 import config from '../config.json'
 const networkConfig = config[config.network]
@@ -19,8 +20,6 @@ window.App = {
     start: function() {
         const self = this
 
-        const Services = self.contract(servicesJSON)
-
         let servicesAddr
         if (networkConfig && networkConfig.services) {
             servicesAddr = networkConfig.services
@@ -31,32 +30,37 @@ window.App = {
             return
         }
 
+        const Services = self.contract(servicesJSON)
+        const Queue = self.contract(queueJSON)
+        const ContractStore = self.contract(csJSON)
+
         Services.at(servicesAddr).then((inst) => {
             self.services = inst
 
-            return self.serviceAddress('Queue')
-        }).then((qAddr) => {
-            const Queue = self.contract(queueJSON)
-            return Queue.at(qAddr)
-        }).then((inst) => {
-            self.queue = inst
-
-            return self.serviceAddress('ContractStore')
-        }).then((csAddr) => {
-            const ContractStore = self.contract(csJSON)
-            return ContractStore.at(csAddr)
-        }).then((inst) => {
-            self.contractStore = inst
-
-            web3.eth.getAccounts((err, accs) => {
-                if (err != null) {
-                    self.error("There was an error fetching your accounts.")
-                    return
-                }
-                self.accounts = accs
-                self.account = accs[0]
-                self.refreshAll()
+            self.serviceAddress('Queue').then((qAddr) => {
+                return Queue.at(qAddr)
+            }).then((inst) => {
+                self.queue = inst
+                self.displayEmitterQueue()
+                self.displayBeneficiaryQueue()
             })
+
+            self.serviceAddress('ContractStore').then((csAddr) => {
+                return ContractStore.at(csAddr)
+            }).then((inst) => {
+                self.contractStore = inst
+                self.displayContracts()
+            })
+        })
+
+        web3.eth.getAccounts((err, accs) => {
+            if (err != null) {
+                self.error("There was an error fetching your accounts.")
+                return
+            }
+            self.accounts = accs
+            self.account = accs[0]
+            self.displayAccounts(self.accounts)
         })
 
         $('[id^="nav-btn-"]').click(clickChangePage)
@@ -65,14 +69,6 @@ window.App = {
         if (selectedPage) {
             changePage(selectedPage)
         }
-    },
-
-    refreshAll: function() {
-        const self = this
-        self.displayAccounts(self.accounts)
-        self.displayEmitterQueue()
-        self.displayBeneficiaryQueue()
-        self.displayContracts()
     },
 
     displayEmitterQueue: function() {
@@ -106,9 +102,19 @@ window.App = {
             return Promise.all(promises)
         }).then((addresses) => {
             $('.contracts-loading').remove()
+            const BackedValueContract = self.contract(bvcJSON)
             const tbl = $('#contracts-table tbody')
             addresses.forEach((addr) => {
-                tbl.append(row([addr]))
+                BackedValueContract.at(addr).then((bvc) => {
+                    return Promise.all([
+                        bvc.emitter.call(),
+                        bvc.beneficiary.call(),
+                        bvc.pendingNotionalCents.call(),
+                        bvc.notionalCents.call()
+                    ])
+                }).then((bvcValues) => {
+                    tbl.append(row([addr, addrFmt(bvcValues[0]), addrFmt(bvcValues[1]), bvcValues[2], bvcValues[3]]))
+                })
             })
         })
     },
@@ -138,8 +144,24 @@ function row(cellValues) {
     return tr
 }
 
+function addrFmt(address) {
+    if (!web3.isAddress(address)) {
+        console.error(`NOT an address: ${address}, skipping formatting ...`)
+        return address
+    }
+    const addrStr = address.substr(0, 10) + '...'
+    return `<div data-toggle="tooltip" data-placement="right" title="${address}">${addrStr}</div>`
+}
+
+// puts a tooltip with Queue entry ID over the queue position index number
+function positionFmt(pos, id) {
+    return  `<div data-toggle="tooltip" data-placement="right" title="${id}">${pos}</div>`
+}
+
 function displayQueue(table, getIds, getEntry, name) {
-    getIds().then((ids) => {
+    let ids
+    getIds().then((idsRet) => {
+        ids = idsRet
         let promises = []
         ids.forEach((id) => {
             promises.push(getEntry.call(id))
@@ -154,8 +176,8 @@ function displayQueue(table, getIds, getEntry, name) {
             else if (position == entries.length)
                 position = 'tail'
             table.append(row([
-                position,
-                entry[0],
+                positionFmt(position, ids[idx]),
+                addrFmt(entry[0]),
                 web3.fromWei(entry[1], 'ether')
             ]))
         })
