@@ -158,7 +158,7 @@ contract DollarToken is Owned {
              participantAmount
         );
         ContractCreated(newContract, notionalCents);
-        ContractStore(contractStore).add(newContract);
+        ContractStore(contractStore).add(newContract, emitAccount, beneAccount);
     }
 
     /**

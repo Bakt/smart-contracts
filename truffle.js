@@ -1,8 +1,4 @@
-var DefaultBuilder = require("truffle-default-builder");
-
 module.exports = {
-    build: new DefaultBuilder({}),
-
     networks: {
         "development": {
             host: "testrpc",
