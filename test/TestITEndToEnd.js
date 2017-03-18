@@ -9,6 +9,7 @@ const ExchangeRate = artifacts.require("./ExchangeRate.sol")
 const Queue = artifacts.require("./Queue.sol")
 const ContractStore = artifacts.require("./ContractStore.sol")
 const WithdrawalReserves = artifacts.require("./WithdrawalReserves.sol")
+const BackedValueContract = artifacts.require("./BackedValueContract.sol")
 
 const GAS_PRICE = 100000000000 // truffle / testrpc fixed gas price
 const ETH_PRICE = 12.80
@@ -25,93 +26,72 @@ contract('Integration Test - End to End', (accounts) => {
     const PARTY1 = accounts[5], PARTY2 = accounts[6]
     const MATCHER_ACCOUNT = accounts[0]
 
-    it("should handle on full cycle", (done) => {
-        let newAddr
-        let eEntry, bEntry
-        let dt, queue, exchangeRate
+    it("should handle on full cycle", function* () {
+        const dt = yield DollarToken.deployed();
+        const exchangeRate = yield ExchangeRate.deployed();
+        yield exchangeRate.receiveExchangeRate(cents(1000), {from: MATCHER_ACCOUNT})
 
-        DollarToken.deployed().then((c) => {
-            dt = c
-            return ExchangeRate.deployed()
-        }).then((c) => {
-            exchangeRate = c
-            return exchangeRate.receiveExchangeRate(
-                cents(1000), {from: MATCHER_ACCOUNT}
-            );
-        }).then(() => {
-            return Queue.deployed()
-        }).then((c) => {
-            queue = c
-            return createEntries(queue)
-        }).then((entries) => {
-            eEntry = entries[0]
-            bEntry = entries[1]
-            // [eEntry, bEntry] = entries
-        }).then((result) => {
-            /*
-             *  Emit contract for the 2 entries
-             *  call from the Matcher account
-             */
-            return dt.emitContract(eEntry, bEntry, {from: MATCHER_ACCOUNT})
-        }).then((result) => {
+        const queue = yield Queue.deployed();
+        const entries = yield createEntries(queue)
+        const eEntry = entries[0]
+        const bEntry = entries[1]
 
-            /*
-             *  check new contract and all balances
-             */
-            const args = result.logs[0].args
-            newAddr = args.newContract
-            assert.isTrue(web3.isAddress(newAddr))
+        /*
+         *  Emit contract for the 2 entries
+         *  call from the Matcher account
+         */
+        const ecResult = yield dt.emitContract(eEntry, bEntry, {from: MATCHER_ACCOUNT})
+        const args = ecResult.logs[0].args
+        const newAddr = args.newContract
+        assert.isTrue(web3.isAddress(newAddr))
 
-            // const notionalDollars = 2
-            // assert.equal(args.notionalValue, notionalDollars * weiPerDollar,
-            //         "expect to be 2 dollars - lowest amount rounded down to even dollar")
-            // assert.equal(bal(dt.address), 0,
-            //         "dts contract emptied out")
-            // assert.equal(bal(newAddr), notionalDollars * 2 * weiPerDollar,
-            //         "4 dollars expected - 2 dollars each")
-            //
-            // // use BigNumber to handle large balance and avoid float precision issues
-            // const expectedBal = (balBefore, entryDollars, contractDollars) => {
-            //     return new BigNumber(entryDollars).minus(2).times(weiPerDollar).plus(balBefore)
-            // }
-            // assert(balBigNumber(PARTY1).eq(
-            //         expectedBal(balP1Before, DOLLAR_P1, notionalDollars)),
-            //         "expect refund difference from 2 dollars")
-            // assert(balBigNumber(PARTY2).eq(
-            //         expectedBal(balP2Before, DOLLAR_P2, notionalDollars)),
-            //         "expect refund difference from 2 dollars")
+        // const bvc = yield BackedValueContract.at(newAddr)
+        // assert.equal(bvc.beneficiary.call(), PARTY1)
+        // assert.equal(bvc.emitter.call(), PARTY2)
+        // assert.equal(bvc.notionalCents.call(), 12)
+        // assert.equal(bvc.pendingNotionalCents.call(), 112)
 
-            /*
-             * Check new contract was posted to the store
-             */
-            return ContractStore.deployed()
-        }).then((store) => {
-            return Promise.all([
-                store.exists.call(newAddr),
-                store.isOpen.call(newAddr)
-            ])
-        }).then((results) => {
-            assert(results[0] === true)
-            assert(results[1] === true)
+        // const notionalDollars = 2
+        // assert.equal(args.notionalValue, notionalDollars * weiPerDollar,
+        //         "expect to be 2 dollars - lowest amount rounded down to even dollar")
+        // assert.equal(bal(dt.address), 0,
+        //         "dts contract emptied out")
+        // assert.equal(bal(newAddr), notionalDollars * 2 * weiPerDollar,
+        //         "4 dollars expected - 2 dollars each")
+        //
+        // // use BigNumber to handle large balance and avoid float precision issues
+        // const expectedBal = (balBefore, entryDollars, contractDollars) => {
+        //     return new BigNumber(entryDollars).minus(2).times(weiPerDollar).plus(balBefore)
+        // }
+        // assert(balBigNumber(PARTY1).eq(
+        //         expectedBal(balP1Before, DOLLAR_P1, notionalDollars)),
+        //         "expect refund difference from 2 dollars")
+        // assert(balBigNumber(PARTY2).eq(
+        //         expectedBal(balP2Before, DOLLAR_P2, notionalDollars)),
+        //         "expect refund difference from 2 dollars")
 
-            /*
-             *  check entries removed and set to filled
-             */
-            return queue.lengthEmitter.call()
-        }).then((count) => {
-            assert.equal(count.toNumber(), 0)
-            return queue.lengthBeneficiary.call()
-        }).then((count) => {
-            assert.equal(count.toNumber(), 0)
-            return queue.getEntryEmitter.call(eEntry)
-        }).then((result) => {
-            assert(result[2])  // filled
-            return queue.getEntryBeneficiary.call(bEntry)
-        }).then((result) => {
-            assert(result[2])  // filled
+        /*
+         * Check new contract was posted to the store
+         */
+        const store = yield ContractStore.deployed()
+        assert((yield store.exists.call(newAddr)) === true)
+        assert((yield store.isOpen.call(newAddr)) === true)
 
-            done()
-        })
+        /*
+         *  check entries removed and set to filled
+         */
+        assert.equal((yield queue.lengthEmitter.call()).toNumber(), 0)
+        assert.equal((yield queue.lengthBeneficiary.call()).toNumber(), 0)
+        assert((yield queue.getEntryEmitter.call(eEntry))[2])
+        assert((yield queue.getEntryBeneficiary.call(bEntry))[2])
+
+        /*
+         *  check balances
+         */
+        const reserves = yield WithdrawalReserves.deployed();
+
+        // TODO: how to get done with the generator style function?? :
+        // done()
     })
 
     function createEntries(queue) {
