@@ -1,5 +1,10 @@
 'use strict'
 
+/**
+ * Integration test that tests the full flow from sending ether to having the
+ * contract drawn up checking balances and state values along the way.
+ */
+
 require('mocha-generators').install();
 
 const BigNumber = require('bignumber.js')
@@ -29,12 +34,16 @@ contract('Integration Test - End to End', (accounts) => {
     it("should handle on full cycle", function* () {
         const dt = yield DollarToken.deployed();
         const exchangeRate = yield ExchangeRate.deployed();
-        yield exchangeRate.receiveExchangeRate(cents(1000), {from: MATCHER_ACCOUNT})
+        yield exchangeRate.receiveExchangeRate(cents(ETH_PRICE * 100), {from: MATCHER_ACCOUNT})
 
         const queue = yield Queue.deployed();
         const entries = yield createEntries(queue)
         const eEntry = entries[0]
         const bEntry = entries[1]
+
+        const reserves = yield WithdrawalReserves.deployed();
+        assert.equal((yield reserves.balances.call(PARTY1)).toNumber(), ONE_DOLLAR)
+        assert.equal((yield reserves.balances.call(PARTY2)).toNumber(), ONE_DOLLAR)
 
         /*
          *  Emit contract for the 2 entries
@@ -45,30 +54,14 @@ contract('Integration Test - End to End', (accounts) => {
         const newAddr = args.newContract
         assert.isTrue(web3.isAddress(newAddr))
 
-        // const bvc = yield BackedValueContract.at(newAddr)
-        // assert.equal(bvc.beneficiary.call(), PARTY1)
-        // assert.equal(bvc.emitter.call(), PARTY2)
-        // assert.equal(bvc.notionalCents.call(), 12)
-        // assert.equal(bvc.pendingNotionalCents.call(), 112)
-
-        // const notionalDollars = 2
-        // assert.equal(args.notionalValue, notionalDollars * weiPerDollar,
-        //         "expect to be 2 dollars - lowest amount rounded down to even dollar")
-        // assert.equal(bal(dt.address), 0,
-        //         "dts contract emptied out")
-        // assert.equal(bal(newAddr), notionalDollars * 2 * weiPerDollar,
-        //         "4 dollars expected - 2 dollars each")
-        //
-        // // use BigNumber to handle large balance and avoid float precision issues
-        // const expectedBal = (balBefore, entryDollars, contractDollars) => {
-        //     return new BigNumber(entryDollars).minus(2).times(weiPerDollar).plus(balBefore)
-        // }
-        // assert(balBigNumber(PARTY1).eq(
-        //         expectedBal(balP1Before, DOLLAR_P1, notionalDollars)),
-        //         "expect refund difference from 2 dollars")
-        // assert(balBigNumber(PARTY2).eq(
-        //         expectedBal(balP2Before, DOLLAR_P2, notionalDollars)),
-        //         "expect refund difference from 2 dollars")
+        /*
+         *  Check the contract details
+         */
+        const bvc = yield BackedValueContract.at(newAddr)
+        assert.equal(yield bvc.beneficiary.call(), PARTY1)
+        assert.equal(yield bvc.emitter.call(), PARTY2)
+        assert.equal((yield bvc.notionalCents.call()).toNumber(), 100)
+        assert.equal((yield bvc.pendingNotionalCents.call()).toNumber(), 0)
 
         /*
          * Check new contract was posted to the store
@@ -76,6 +69,13 @@ contract('Integration Test - End to End', (accounts) => {
         const store = yield ContractStore.deployed()
         assert((yield store.exists.call(newAddr)) === true)
         assert((yield store.isOpen.call(newAddr)) === true)
+
+        /*
+         *  check balances
+         */
+        assert.equal(web3.eth.getBalance(newAddr).toNumber(), ONE_DOLLAR * 2)
+        assert.equal((yield reserves.balances.call(PARTY1)).toNumber(), 0)
+        assert.equal((yield reserves.balances.call(PARTY2)).toNumber(), 0)
 
         /*
          *  check entries removed and set to filled
@@ -86,12 +86,9 @@ contract('Integration Test - End to End', (accounts) => {
         assert((yield queue.getEntryBeneficiary.call(bEntry))[2])
 
         /*
-         *  check balances
+         * TODO: take further and have one party withdraw from the contract
          */
-        const reserves = yield WithdrawalReserves.deployed();
-
-        // TODO: how to get done with the generator style function?? :
-        // done()
+        
     })
 
     function createEntries(queue) {
