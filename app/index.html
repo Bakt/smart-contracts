@@ -161,28 +161,47 @@
 <div id="page-contracts" style="display:none">
   <h2>Contracts</h2>
 
-  <div>
-      This page shows the addresses of all contracts in the ContractStore. These are instances of BackedValueContract.
-      <br/>
-      To be expanded to show details inside the contract.
-      <br/><br/>
+  <div style="margin-bottom:20px">
+      This page shows the addresses of all BackedValueContract's in the ContractStore.
   </div>
 
   <div id="contracts-details">
-    <table id="contracts-table" class="table">
-      <thead>
-        <tr>
-          <th>Address</th>
-          <th>Emitter</th>
-          <th>Beneficiary</th>
-          <th>Pending Cents</th>
-          <th>Cents</th>
-          <th>Open</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-    <div class="contracts-loading">Loading ...</div>
+    <div class="panel panel-success">
+      <div class="panel-heading">Contracts (Open)</div>
+      <div class="panel-body">
+        <table id="contracts-open-table" class="table">
+          <thead>
+            <tr>
+              <th>Address</th>
+              <th>Emitter</th>
+              <th>Beneficiary</th>
+              <th>Pending Cents</th>
+              <th>Cents</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div class="contracts-loading">Loading ...</div>
+      </div>
+    </div>
+
+    <div class="panel panel-info">
+      <div class="panel-heading">Contracts (Closed)</div>
+      <div class="panel-body">
+        <table id="contracts-closed-table" class="table">
+          <thead>
+            <tr>
+              <th>Address</th>
+              <th>Emitter</th>
+              <th>Beneficiary</th>
+              <th>Pending Cents</th>
+              <th>Cents</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </div>
 

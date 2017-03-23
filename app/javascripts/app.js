@@ -122,7 +122,8 @@ window.App = {
         }).then((addresses) => {
             $('.contracts-loading').remove()
             const BackedValueContract = self.contract(bvcJSON)
-            const tbl = $('#contracts-table tbody')
+            const tOpen = $('#contracts-open-table tbody')
+            const tClosed = $('#contracts-closed-table tbody')
             addresses.forEach((addr) => {
                 BackedValueContract.at(addr).then((bvc) => {
                     return Promise.all([
@@ -133,6 +134,8 @@ window.App = {
                         self.contractStore.isOpen.call(addr)
                     ])
                 }).then((bvcValues) => {
+                    const isOpen = (bvcValues[4] === true)
+                    const tbl = (isOpen) ? tOpen : tClosed
                     tbl.append(
                         row([
                             addr,
@@ -140,7 +143,6 @@ window.App = {
                             addrFmt(bvcValues[1]),
                             bvcValues[2],
                             bvcValues[3],
-                            bvcValues[4]
                         ])
                     )
                 })
@@ -287,9 +289,13 @@ function sendToQueue() {
         value: amountWei,
         gas: 500000
     }
-    console.log(`sendTx: ${JSON.stringify(txReq)}`)
+    console.log(`sending ETH to channel: ${JSON.stringify(txReq)}`)
     web3.eth.sendTransaction(txReq, (err, result) => {
-        alert(`TX RSP: err: ${err} res:${result}`)
+        if (err) {
+            alert(`Error sending to channel: ${err}`)
+        } else {
+            alert(`ETH send to channel. Reload page and check Queue tab to see order.`)
+        }
     })
 }
 
