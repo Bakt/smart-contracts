@@ -40,7 +40,7 @@ contract BackedValueContract {
 
     uint INITIAL_MINIMUM_MARGIN_RATIO = 2;
 
-    bytes32 constant ON_QUEUE_SIG = sha3('onQueue(uint,bool)');
+    bytes32 constant ON_QUEUE_SIG = sha3('onQueue(address,bool)');
 
     function BackedValueContract(address _servicesAddress,
                                  address _emitter,
@@ -218,6 +218,9 @@ contract BackedValueContract {
         }
 
         Disolve(this);
+
+        // TODO: suicide the contract ???
+
         return true;
     }
 

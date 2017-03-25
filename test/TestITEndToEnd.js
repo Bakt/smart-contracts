@@ -73,7 +73,7 @@ contract('Integration Test - End to End', (accounts) => {
         /*
          *  check balances
          */
-        assert.equal(web3.eth.getBalance(newAddr).toNumber(), ONE_DOLLAR * 2)
+        assert.equal(web3.eth.getBalance(bvc.address).toNumber(), ONE_DOLLAR * 2)
         assert.equal((yield reserves.balances.call(PARTY1)).toNumber(), 0)
         assert.equal((yield reserves.balances.call(PARTY2)).toNumber(), 0)
 
@@ -86,9 +86,24 @@ contract('Integration Test - End to End', (accounts) => {
         assert((yield queue.getEntryBeneficiary.call(bEntry))[2])
 
         /*
-         * TODO: take further and have one party withdraw from the contract
+         *  Party 1 disolves the contract
          */
-        
+        const p1BalBefore = web3.eth.getBalance(PARTY1)
+        const disolved = yield bvc.disolve({from: PARTY1})
+        assert(disolved)
+        // assert.equal(web3.eth.getBalance(bvc.address).toNumber(), 0)
+
+        // Party 2 back on queue and ETH moved to reserves
+        assert.equal((yield queue.lengthEmitter.call()).toNumber(), 1)
+        assert.equal((yield reserves.balances.call(PARTY2)).toNumber(), ONE_DOLLAR)
+
+        // Party 1 refunded and not on queue or in reserves
+        assert.equal(web3.eth.getBalance(PARTY1).toNumber(), p1BalBefore + ONE_DOLLAR)
+        assert.equal((yield queue.lengthBeneficiary.call()).toNumber(), 0)
+        assert.equal((yield reserves.balances.call(PARTY1)).toNumber(), 0)
+
+
+        assert.equal(web3.eth.getBalance(bvc.address).toNumber(), 0)
     })
 
     function createEntries(queue) {
