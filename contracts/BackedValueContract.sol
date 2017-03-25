@@ -28,6 +28,7 @@ contract BackedValueContract {
         uint weiPerCent
     );
     event EmitterWithdrawal(uint weiWithdrawn);
+    event Disolve(address bvcAddress);
 
     // balance of contract is value on chain
     uint public notionalCents;
@@ -38,6 +39,8 @@ contract BackedValueContract {
     ServicesI services;
 
     uint INITIAL_MINIMUM_MARGIN_RATIO = 2;
+
+    bytes32 constant ON_QUEUE_SIG = sha3('onQueue(uint,bool)');
 
     function BackedValueContract(address _servicesAddress,
                                  address _emitter,
@@ -158,6 +161,7 @@ contract BackedValueContract {
         // re-entrance protection.
         uint priorNotionalCents = notionalCents;
         notionalCents = 0;
+        // TODO: move to withdrawal reserves instead of sending
         uint sentWei = beneficiary.safeSend(weiEquivalent);
         notionalCents = priorNotionalCents.flooredSub(centsValue);
 
@@ -173,10 +177,48 @@ contract BackedValueContract {
             throw;
         }
 
+        // TODO: move to withdrawal reserves instead of sending
         uint sentWei = emitter.safeSend(weiValue);
 
         EmitterWithdrawal(sentWei);
         return (sentWei > 0);
+    }
+
+    /**
+     * @dev Called by one of the parities to exit the contract completely and
+     *      get thier funds back. The other party goes to the top of the queue
+     *      to get matched and enter another contract.
+     */
+    function disolve()
+        onlyParticipants
+        external
+        returns (bool)
+    {
+        bool isEmitter = (msg.sender == emitter);
+        uint emitterAmount = allowedEmitterWithdrawal();
+        uint beneficiaryAmount = allowedBeneficiaryWithdrawal();
+
+        // Refund the disolver thier ETH
+        bool withdrew = (isEmitter) ?
+                withdrawToEmitter(emitterAmount) :
+                withdrawToBeneficiary(beneficiaryAmount);
+        if (!withdrew) {
+            return false;
+        }
+
+        // Put the other party on the Queue for a rematch
+        uint onQueueAmount = (isEmitter) ? beneficiaryAmount : emitterAmount;
+        address onQueueAccount = (isEmitter) ? emitter : beneficiary;
+        if (!services.dollarToken().call.value(onQueueAmount)( // generic call to avoid circular dependency
+                bytes4(ON_QUEUE_SIG),
+                onQueueAccount,
+                isEmitter))
+        {
+            throw;
+        }
+
+        Disolve(this);
+        return true;
     }
 
 

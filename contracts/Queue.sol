@@ -98,9 +98,29 @@ contract Queue is Owned {
         fromDollarToken
         returns (bytes32 entryId)
     {
+        addEmitterInternal(_account, _amount, true);
+    }
+
+    function addEmitterToHead(address _account, uint _amount)
+        external
+        isOpen
+        fromDollarToken
+        returns (bytes32 entryId)
+    {
+        addEmitterInternal(_account, _amount, false);
+    }
+
+    function addEmitterInternal(address _account, uint _amount, bool toTail)
+        internal
+        returns (bytes32 entryId)
+    {
         // TODO: add a nonce - what if _account creates 2 entries for the same value in the same block?
         entryId = sha3("emitter", _account, _amount, block.number);
-		emitterQueue.pushTail(entryId, _account, _amount);
+        if (toTail) {
+            emitterQueue.pushTail(entryId, _account, _amount);
+        } else {
+            emitterQueue.pushHead(entryId, _account, _amount);
+        }
         EmitterAdded(_account, entryId, _amount);
     }
 
@@ -110,9 +130,29 @@ contract Queue is Owned {
         fromDollarToken
         returns (bytes32 entryId)
     {
+        addBeneficiaryInternal(_account, _amount, true);
+    }
+
+    function addBeneficiaryToHead(address _account, uint _amount)
+        external
+        isOpen
+        fromDollarToken
+        returns (bytes32 entryId)
+    {
+        addBeneficiaryInternal(_account, _amount, false);
+    }
+
+    function addBeneficiaryInternal(address _account, uint _amount, bool toTail)
+        internal
+        returns (bytes32 entryId)
+    {
         // TODO: add a nonce - what if _account creates 2 entries for the same value in the same block?
         entryId = sha3("beneficiary", _account, _amount, block.number);
-		beneficiaryQueue.pushTail(entryId, _account, _amount);
+        if (toTail) {
+            beneficiaryQueue.pushTail(entryId, _account, _amount);
+        } else {
+            beneficiaryQueue.pushHead(entryId, _account, _amount);
+        }
         BeneficiaryAdded(_account, entryId, _amount);
     }
 

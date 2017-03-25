@@ -93,6 +93,25 @@ contract DollarToken is Owned {
         Queue(queue).addBeneficiary(_beneficiaryAddr, msg.value);
     }
 
+    /**
+     * @dev Pushes an account and value on to the queue at the head to get
+     *      picked up for a quick match. This is called when a contract has
+     *      disolved and the party who did not disolve should enter another
+     *      contract.
+     */
+    function onQueue(address _account, bool _forEmit)
+        payable
+        // fromBVC  // TODO: check ContractStore that it's a valid contract or try use the address as a BVC
+    {
+        reserveFor(_account);
+
+        if (_forEmit) {
+            Queue(queue).addEmitterToHead(_account, msg.value);
+        } else {
+            Queue(queue).addBeneficiaryToHead(_account, msg.value);
+        }
+    }
+
     function reserveFor(address _participant)
         payable
     {
