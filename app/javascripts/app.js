@@ -9,6 +9,7 @@ import servicesJSON from '../../build/contracts/Services.json'
 import queueJSON from '../../build/contracts/Queue.json'
 import csJSON from '../../build/contracts/ContractStore.json'
 import bvcJSON from '../../build/contracts/BackedValueContract.json'
+import exJSON from '../../build/contracts/ExchangeRate.json'
 
 import truffleJs from '../../truffle'
 import config from '../config.json'
@@ -34,6 +35,7 @@ window.App = {
         const Services = self.contract(servicesJSON)
         const Queue = self.contract(queueJSON)
         const ContractStore = self.contract(csJSON)
+        const ExchangeRate = self.contract(exJSON)
 
         Services.at(servicesAddr).then((inst) => {
             self.services = inst
@@ -54,6 +56,13 @@ window.App = {
                 self.displayContracts()
             })
 
+            self.services.exchangeRate().then((exAddr) => {
+                return ExchangeRate.at(exAddr)
+            }).then((inst) => {
+                self.exchangeRate = inst
+                self.displayExchangeRate()
+            })
+
             self.displayServices()
         })
 
@@ -69,6 +78,7 @@ window.App = {
 
         $('[id^="nav-btn-"]').click(clickChangePage)
         $('[id^="btn-send-"]').click(sendToQueue)
+        $('[id="btn-update-exrate"]').click(self.updateExRate)
 
         var selectedPage = localStorage.getItem('page')
         if (selectedPage) {
@@ -172,6 +182,42 @@ window.App = {
             add("OraclizeFacade", res[4])
             add("Factory", res[6])
             $(`.service-loading`).remove()
+        })
+    },
+
+    displayExchangeRate: function() {
+        const ex = this.exchangeRate
+        Promise.all([
+            ex.weiPerCent.call(),
+            ex.centsPerEth.call(),
+            ex.lastBlock.call()
+        ]).then((res) => {
+            const tbl = $('#exrate-table tbody')
+            const add = (name, addr) => { tbl.append(row([name, addr])) }
+            add("weiPerCent", `${res[0]} (${web3.fromWei(res[0], 'ether')} ETH)`)
+            add("centsPerEth", res[1])
+            add("lastBlock", res[2])
+            $(`.exrate-loading`).remove()
+        })
+    },
+
+    updateExRate: function() {
+        const self = window.App
+
+        const centsPerEth = parseInt($(`#exrate-new`).val())
+        if (!Number.isInteger(centsPerEth) || centsPerEth <= 0) {
+            alert('Cents per ETH invalid - enter a positive number')
+            return
+        }
+
+        self.exchangeRate.receiveExchangeRate(centsPerEth, {
+            from: web3.eth.defaultAccount // why is this not happening implicitly?
+        }).then(() => {
+            console.log(`Updated exchange rate to ${centsPerEth} cents per ETH`)
+            $('#exrate-table tbody').empty()
+            self.displayExchangeRate()
+        }).catch((err) => {
+            alert(`Update exchange rate failed: ${err}`)
         })
     },
 
@@ -310,6 +356,7 @@ window.addEventListener('load', () => {
         console.warn(`Using backup endpoint ${endpoint} because no web3 detected`)
         window.web3 = new Web3(new Web3.providers.HttpProvider(endpoint))
     }
+    window.web3.eth.defaultAccount = web3.eth.accounts[0]
 
     console.log(`isConnected: ${window.web3.isConnected()}`)
 

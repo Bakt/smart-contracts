@@ -209,6 +209,59 @@
   <h2>System Information</h2>
 
   <div class="row">
+    <div id="status-details" class="col-md-6">
+      <div class="panel panel-default">
+        <div class="panel-heading">Ethereum Client Status</div>
+        <div class="panel-body">
+          <table id="status-table" class="table">
+            <thead>
+              <tr>
+                <th>Property</th>
+                <th>Value</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+          <div class="status-loading">Loading ...</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="exrate-details" class="col-md-6">
+      <div class="panel panel-warning">
+        <div class="panel-heading">Exchange Rate</div>
+        <div class="panel-body" id="exrate-details">
+
+          <table id="exrate-table" class="table">
+            <thead>
+              <tr>
+                <th>Property</th>
+                <th>Value</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+
+          <div class="exrate-loading">Loading ...</div>
+
+          <hr/>
+
+          <div class="row">
+            <div class="col-md-4">Change Rate:</div>
+            <div class="col-md-4">
+              <input id="exrate-new" type="text" class="form-control" placeholder="Cents per ETH">
+            </div>
+            <div class="col-md-4">
+              <button id="btn-update-exrate" type="button" class="btn btn-default">Update</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
     <div id="service-details" class="col-md-6">
       <div class="panel panel-info">
         <div class="panel-heading">Service Addresses</div>
@@ -227,26 +280,6 @@
       </div>
     </div>
 
-    <div id="service-details" class="col-md-6">
-      <div class="panel panel-default">
-        <div class="panel-heading">Status</div>
-        <div class="panel-body">
-          <table id="status-table" class="table">
-            <thead>
-              <tr>
-                <th>Property</th>
-                <th>Value</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-          <div class="status-loading">Loading ...</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="row">
     <div id="account-details" class="col-md-6">
       <div class="panel panel-success">
         <div class="panel-heading">Your Accounts</div>
@@ -263,6 +296,7 @@
           <div class="accounts-loading">Loading ...</div>
         </div>
       </div>
+    </div>
   </div>
 
 </div>
