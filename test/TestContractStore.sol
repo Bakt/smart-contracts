@@ -48,6 +48,20 @@ contract TestContractStore {
         Assert.equal(db.numContractsAccount(A2), 1, "1 contract for account");
     }
 
+    function testWarningLevels() {
+      ContractStore db = new ContractStore();
+      address bvc = newBVC(A1, A2, 100);
+      db.add(bvc, A1, A2);
+
+      uint warningWeiPerCent = db.thresholdWarningLevel(bvc);
+      uint dissolveWeiPerCent = db.thresholdDissolveLevel(bvc);
+      // the check
+      Assert.isAbove(warningWeiPerCent, 0, "warning not above 0");
+      Assert.isAbove(dissolveWeiPerCent, 0, "dissolve not above 0");
+    }
+
+
+
     function newBVC(address emitter, address beneficiary, uint amount)
         internal
         returns (address bvc)

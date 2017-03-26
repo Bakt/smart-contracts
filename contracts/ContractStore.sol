@@ -17,6 +17,8 @@ contract ContractStore is Owned {
     struct Contract {
         bool open;
         bool exists;
+        uint thresholdWarningLevel;
+        uint thresholdDissolveLevel;
     }
 
     // TODO: revisit these data structures - for now this is a simple set of
@@ -24,6 +26,7 @@ contract ContractStore is Owned {
 
     mapping (address => Contract) contracts;
     mapping (address => address[]) accountsMap;
+
     address[] contractsArr;
 
     /*
@@ -52,7 +55,7 @@ contract ContractStore is Owned {
         external
         checkNotExists(_contract)
     {
-        contracts[_contract] = Contract(true, true);
+        contracts[_contract] = Contract(true, true, 1, 1);
         contractsArr.push(_contract);
         accountsMap[_account1].push(_contract);
         accountsMap[_account2].push(_contract);
@@ -77,6 +80,20 @@ contract ContractStore is Owned {
         returns (bool)
     {
         return (contracts[_contract].exists == true);
+    }
+
+    function thresholdWarningLevel(address _contract)
+        constant
+        returns (uint weiPerCent)
+    {
+        weiPerCent = contracts[_contract].thresholdWarningLevel;
+    }
+
+    function thresholdDissolveLevel(address _contract)
+        constant
+        returns (uint weiPerCent)
+    {
+        weiPerCent = contracts[_contract].thresholdDissolveLevel;
     }
 
     function numContracts()
