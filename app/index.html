@@ -24,15 +24,91 @@
 
         <div class="collapse navbar-collapse" id="bakt-navbar-collapse">
           <ul class="nav navbar-nav">
-            <li class="active"><a id="nav-btn-queue" href="#">Queues</a></li>
+            <li class="active"><a id="nav-btn-home" href="#">Home</a></li>
+            <li><a id="nav-btn-queue" href="#">Queues</a></li>
             <li><a id="nav-btn-contracts" href="#">Contracts</a></li>
+            <li><a id="nav-btn-sysinfo" href="#">System Info (dev)</a></li>
           </ul>
         </div>
       </div>
     </nav>
   </div>
 
-<div id="page-queue">
+<div id="page-home">
+  <h2>Home</h2>
+
+  <div class="row">
+    <div class="col-md-12">
+      <div class="panel panel-info">
+        <div class="panel-heading">Buy - Dollar Token (Quick)</div>
+        <div class="panel-body" id="buy-details">
+          <div id="buy">
+            SEND ETHER to a Channel using a wallet:
+            <br/><br/>
+            <div class="row">
+              <div class="col-md-2">Long (Dollar):</div>
+              <div id="long-address" class="col-md-10"></div>
+            </div>
+            <div class="row">
+              <div class="col-md-2">Short (Ether):</div>
+              <div id="short-address" class="col-md-10"></div>
+            </div>
+            <hr/>
+            SEND ETHER with a local account:
+            <br/><br/>
+
+            <div class="row">
+              <div class="col-md-2">Long (Dollar):</div>
+              <div class="col-md-6">
+                <select id="long-select" class="form-control"></select>
+              </div>
+              <div class="col-md-3">
+                <input id="long-value" type="text" class="form-control" placeholder="Amount (ETH)">
+              </div>
+              <div class="col-md-1">
+                <button id="btn-send-long" type="button" class="btn btn-default" data-type="long">Send</button>
+              </div>
+            </div>
+
+            <div class="row" style="margin-top:10px;">
+              <div class="col-md-2">Short (Ether):</div>
+              <div class="col-md-6">
+                <select id="short-select" class="form-control"></select>
+              </div>
+              <div class="col-md-3">
+                <input id="short-value" type="text" class="form-control" placeholder="Amount (ETH)">
+              </div>
+              <div class="col-md-1">
+                <button id="btn-send-short" type="button" class="btn btn-default" data-type="short">Send</button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr/>
+
+  <div class="row" style="margin-top:40px">
+    <div class="col-md-12">
+      <div class="panel panel-default">
+        <div class="panel-heading">Buy - Dollar Token (Order Book) [TODO]</div>
+        <div class="panel-body">
+          <div id="buy-at-price">
+            <div style="margin-top:40px;margin-bottom:40px;">
+              TODO: Place order at a given price in an order book
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div id="page-queue" style="display:none;">
   <h2>Queues</h2>
 
   <div>
@@ -80,49 +156,149 @@
       </div>
     </div>
   </div>
-  <div class="row">
-    <div class="col-md-offset-2 col-md-8">
-      <div id="accounts" class="panel panel-default center-block">
-        <table id="accounts-table" class="table">
+</div>
+
+<div id="page-contracts" style="display:none">
+  <h2>Contracts</h2>
+
+  <div style="margin-bottom:20px">
+      This page shows the addresses of all BackedValueContract's in the ContractStore.
+  </div>
+
+  <div id="contracts-details">
+    <div class="panel panel-success">
+      <div class="panel-heading">Contracts (Open)</div>
+      <div class="panel-body">
+        <table id="contracts-open-table" class="table">
           <thead>
             <tr>
-              <th>Wallet Accounts</th>
-              <th>Ether</th>
+              <th>Address</th>
+              <th>Emitter</th>
+              <th>Beneficiary</th>
+              <th>Pending Cents</th>
+              <th>Cents</th>
             </tr>
           </thead>
           <tbody></tbody>
         </table>
-        <div class="accounts-loading">Loading ...</div>
+        <div class="contracts-loading">Loading ...</div>
+      </div>
+    </div>
+
+    <div class="panel panel-info">
+      <div class="panel-heading">Contracts (Closed)</div>
+      <div class="panel-body">
+        <table id="contracts-closed-table" class="table">
+          <thead>
+            <tr>
+              <th>Address</th>
+              <th>Emitter</th>
+              <th>Beneficiary</th>
+              <th>Pending Cents</th>
+              <th>Cents</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
       </div>
     </div>
   </div>
 </div>
 
-<div id="page-contracts" style="display: none">
-  <h2>Contracts</h2>
+<div id="page-sysinfo" style="display:none">
+  <h2>System Information</h2>
 
-  <div>
-      This page shows the addresses of all contracts in the ContractStore. These are instances of BackedValueContract.
-      <br/>
-      To be expanded to show details inside the contract.
-      <br/><br/>
+  <div class="row">
+    <div id="status-details" class="col-md-6">
+      <div class="panel panel-default">
+        <div class="panel-heading">Ethereum Client Status</div>
+        <div class="panel-body">
+          <table id="status-table" class="table">
+            <thead>
+              <tr>
+                <th>Property</th>
+                <th>Value</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+          <div class="status-loading">Loading ...</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="exrate-details" class="col-md-6">
+      <div class="panel panel-warning">
+        <div class="panel-heading">Exchange Rate</div>
+        <div class="panel-body" id="exrate-details">
+
+          <table id="exrate-table" class="table">
+            <thead>
+              <tr>
+                <th>Property</th>
+                <th>Value</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+
+          <div class="exrate-loading">Loading ...</div>
+
+          <hr/>
+
+          <div class="row">
+            <div class="col-md-4">Change Rate:</div>
+            <div class="col-md-4">
+              <input id="exrate-new" type="text" class="form-control" placeholder="Cents per ETH">
+            </div>
+            <div class="col-md-4">
+              <button id="btn-update-exrate" type="button" class="btn btn-default">Update</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
   </div>
 
-  <div id="contracts-details">
-    <table id="contracts-table" class="table">
-      <thead>
-        <tr>
-          <th>Address</th>
-          <th>Emitter</th>
-          <th>Beneficiary</th>
-          <th>Pending Cents</th>
-          <th>Cents</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-    <div class="contracts-loading">Loading ...</div>
+  <div class="row">
+    <div id="service-details" class="col-md-6">
+      <div class="panel panel-info">
+        <div class="panel-heading">Service Addresses</div>
+        <div class="panel-body">
+          <table id="services-table" class="table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Address</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+          <div class="service-loading">Loading ...</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="account-details" class="col-md-6">
+      <div class="panel panel-success">
+        <div class="panel-heading">Your Accounts</div>
+        <div class="panel-body" id="account-details">
+          <table id="accounts-table" class="table">
+            <thead>
+              <tr>
+                <th>Wallet Accounts</th>
+                <th>Ether</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+          <div class="accounts-loading">Loading ...</div>
+        </div>
+      </div>
+    </div>
   </div>
+
 </div>
 
 </body>

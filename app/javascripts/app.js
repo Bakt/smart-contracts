@@ -9,6 +9,7 @@ import servicesJSON from '../../build/contracts/Services.json'
 import queueJSON from '../../build/contracts/Queue.json'
 import csJSON from '../../build/contracts/ContractStore.json'
 import bvcJSON from '../../build/contracts/BackedValueContract.json'
+import exJSON from '../../build/contracts/ExchangeRate.json'
 
 import truffleJs from '../../truffle'
 import config from '../config.json'
@@ -34,6 +35,7 @@ window.App = {
         const Services = self.contract(servicesJSON)
         const Queue = self.contract(queueJSON)
         const ContractStore = self.contract(csJSON)
+        const ExchangeRate = self.contract(exJSON)
 
         Services.at(servicesAddr).then((inst) => {
             self.services = inst
@@ -44,14 +46,24 @@ window.App = {
                 self.queue = inst
                 self.displayEmitterQueue()
                 self.displayBeneficiaryQueue()
+                self.displayBuyAsset()
             })
 
-            self.serviceAddress('ContractStore').then((csAddr) => {
+            self.services.contractStore().then((csAddr) => {
                 return ContractStore.at(csAddr)
             }).then((inst) => {
                 self.contractStore = inst
                 self.displayContracts()
             })
+
+            self.services.exchangeRate().then((exAddr) => {
+                return ExchangeRate.at(exAddr)
+            }).then((inst) => {
+                self.exchangeRate = inst
+                self.displayExchangeRate()
+            })
+
+            self.displayServices()
         })
 
         web3.eth.getAccounts((err, accs) => {
@@ -65,6 +77,8 @@ window.App = {
         })
 
         $('[id^="nav-btn-"]').click(clickChangePage)
+        $('[id^="btn-send-"]').click(sendToQueue)
+        $('[id="btn-update-exrate"]').click(self.updateExRate)
 
         var selectedPage = localStorage.getItem('page')
         if (selectedPage) {
@@ -80,16 +94,30 @@ window.App = {
         displayQueue($('#bene-table tbody'), this.queue.getOpenBeneficiary, this.queue.getEntryBeneficiary, 'bene')
     },
 
+    displayBuyAsset: function() {
+        const self = this
+        self.queue.emitterChannel.call().then((channel) => {
+            self.shortAddress = channel
+            $('#short-address').text(channel)
+        })
+        self.queue.beneficiaryChannel.call().then((channel) => {
+            self.longAddress = channel
+            $('#long-address').text(channel)
+        })
+    },
+
     displayAccounts: function(accounts) {
         $('.accounts-loading').remove()
-        const balFmt = (bal) => (bal < 100)
-            ? bal
-            : bal.toFixed(2)
         const tbl = $('#accounts-table tbody')
         $.each(accounts, function(idx) {
             const account = accounts[idx]
-            const bal = web3.fromWei(web3.eth.getBalance(account), 'ether')
-            tbl.append(row([account, balFmt(bal)]))
+            web3.eth.getBalance(account, (err, res) => {
+                const bal = web3.fromWei(res, 'ether').toFixed(4)
+                tbl.append(row([account, bal]))
+                const text = `${account} (${bal} ETH)`
+                addOption('short-select', account, text)
+                addOption('long-select', account, text)
+            })
         })
     },
 
@@ -104,19 +132,92 @@ window.App = {
         }).then((addresses) => {
             $('.contracts-loading').remove()
             const BackedValueContract = self.contract(bvcJSON)
-            const tbl = $('#contracts-table tbody')
+            const tOpen = $('#contracts-open-table tbody')
+            const tClosed = $('#contracts-closed-table tbody')
             addresses.forEach((addr) => {
                 BackedValueContract.at(addr).then((bvc) => {
                     return Promise.all([
                         bvc.emitter.call(),
                         bvc.beneficiary.call(),
                         bvc.pendingNotionalCents.call(),
-                        bvc.notionalCents.call()
+                        bvc.notionalCents.call(),
+                        self.contractStore.isOpen.call(addr)
                     ])
                 }).then((bvcValues) => {
-                    tbl.append(row([addr, addrFmt(bvcValues[0]), addrFmt(bvcValues[1]), bvcValues[2], bvcValues[3]]))
+                    const isOpen = (bvcValues[4] === true)
+                    const tbl = (isOpen) ? tOpen : tClosed
+                    tbl.append(
+                        row([
+                            addr,
+                            addrFmt(bvcValues[0]),
+                            addrFmt(bvcValues[1]),
+                            bvcValues[2],
+                            bvcValues[3],
+                        ])
+                    )
                 })
             })
+        })
+    },
+
+    displayServices: function() {
+        const s = this.services
+        Promise.all([
+            s.dollarToken.call(),
+            s.serviceAddress.call(web3.sha3("Queue")),
+            s.exchangeRate.call(),
+            s.withdrawalReserves.call(),
+            s.contractStore.call(),
+            s.oraclizeFacade.call(),
+            s.factory.call(),
+        ]).then((res) => {
+            const tbl = $('#services-table tbody')
+            const add = (name, addr) => { tbl.append(row([name, addr])) }
+            add("Services", s.address)
+            add("DollarToken", res[0])
+            add("Queue", res[1])
+            add("ExchangeRate", res[2])
+            add("WithdrawalReserves", res[3])
+            add("ContractStore", res[5])
+            add("OraclizeFacade", res[4])
+            add("Factory", res[6])
+            $(`.service-loading`).remove()
+        })
+    },
+
+    displayExchangeRate: function() {
+        const ex = this.exchangeRate
+        Promise.all([
+            ex.weiPerCent.call(),
+            ex.centsPerEth.call(),
+            ex.lastBlock.call()
+        ]).then((res) => {
+            const tbl = $('#exrate-table tbody')
+            const add = (name, addr) => { tbl.append(row([name, addr])) }
+            add("weiPerCent", `${res[0]} (${web3.fromWei(res[0], 'ether')} ETH)`)
+            add("centsPerEth", res[1])
+            add("lastBlock", res[2])
+            $(`.exrate-loading`).remove()
+        })
+    },
+
+    updateExRate: function() {
+        const self = window.App
+
+        const centsPerEth = parseInt($(`#exrate-new`).val())
+        if (!Number.isInteger(centsPerEth) || centsPerEth <= 0) {
+            alert('Cents per ETH invalid - enter a positive number')
+            return
+        }
+
+        self.exchangeRate.receiveExchangeRate(centsPerEth, {
+            from: web3.eth.defaultAccount // why is this not happening implicitly?
+        }).then(() => {
+            console.log(`Updated exchange rate to ${centsPerEth} cents per ETH`)
+            $('#exrate-table tbody').empty()
+            self.displayExchangeRate()
+        }).catch((err) => {
+            alert(`Update exchange rate failed: ${err}`)
         })
     },
 
@@ -159,6 +260,10 @@ function positionFmt(pos, id) {
     return  `<div data-toggle="tooltip" data-placement="right" title="${id}">${pos}</div>`
 }
 
+function addOption(selectId, value, text) {
+    $(`#${selectId}`).append(`<option value="${value}">${text}</option>`)
+}
+
 function displayQueue(table, getIds, getEntry, name) {
     let ids
     getIds().then((idsRet) => {
@@ -198,6 +303,48 @@ function changePage(pageId) {
     $('#nav-btn-' + pageId).parent().addClass('active')
 }
 
+function displayStatus() {
+    const tbl = $('#status-table tbody')
+    const add = (name, addr) => { tbl.append(row([name, addr])) }
+    add("web3 connected", web3.isConnected())
+    add("web3 provider", web3.currentProvider.host)
+    web3.version.getNetwork((err, res) => {
+        add("network", res)
+    })
+    web3.eth.getBlockNumber((err, res) => {
+        add("block height", res)
+    })
+    $(`.status-loading`).remove()
+}
+
+function sendToQueue() {
+    const type = $(this).data('type')
+    const account = $(`#${type}-select option:selected`).val()
+    const amountEth = parseFloat($(`#${type}-value`).val())
+    if (Number.isNaN(amountEth) || amountEth <= 0) {
+        alert('ETHER amount invalid - enter a positive number for the ETHER amount')
+        return
+    }
+
+    const amountWei = web3.toWei(amountEth, 'ether')
+    const channelAddr = (type === "long") ? window.App.longAddress : window.App.shortAddress
+
+    const txReq = {
+        from: account,
+        to: channelAddr,
+        value: amountWei,
+        gas: 500000
+    }
+    console.log(`sending ETH to channel: ${JSON.stringify(txReq)}`)
+    web3.eth.sendTransaction(txReq, (err, result) => {
+        if (err) {
+            alert(`Error sending to channel: ${err}`)
+        } else {
+            alert(`ETH send to channel. Reload page and check Queue tab to see order.`)
+        }
+    })
+}
+
 window.addEventListener('load', () => {
     // Checking if Web3 has been injected by the browser
     if (typeof web3 !== 'undefined') {
@@ -209,8 +356,11 @@ window.addEventListener('load', () => {
         console.warn(`Using backup endpoint ${endpoint} because no web3 detected`)
         window.web3 = new Web3(new Web3.providers.HttpProvider(endpoint))
     }
+    window.web3.eth.defaultAccount = web3.eth.accounts[0]
 
     console.log(`isConnected: ${window.web3.isConnected()}`)
+
+    displayStatus()
 
     App.start()
 })
