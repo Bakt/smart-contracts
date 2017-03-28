@@ -19,6 +19,11 @@ const endpoint = getEndpoint(config, truffleJs)
 window.App = {
     start: function() {
         const self = this
+        console.log("netConfig:", netConfig);
+
+        console.log("truffle:", truffleJs);
+
+        console.log("web3 network:", web3.version.network);
 
         let servicesAddr
         if (netConfig && netConfig.services) {
@@ -139,10 +144,11 @@ window.App = {
                         bvc.beneficiary.call(),
                         bvc.pendingNotionalCents.call(),
                         bvc.notionalCents.call(),
+                        bvc.currentMargin.call(),
                         self.contractStore.isOpen.call(addr)
                     ])
                 }).then((bvcValues) => {
-                    const isOpen = (bvcValues[4] === true)
+                    const isOpen = (bvcValues[5] === true)
                     const tbl = (isOpen) ? tOpen : tClosed
                     tbl.append(
                         row([
@@ -151,6 +157,7 @@ window.App = {
                             addrFmt(bvcValues[1]),
                             bvcValues[2],
                             bvcValues[3],
+                            web3.toBigNumber(web3.fromWei(bvcValues[4], 'ether')).plus(1).toString() + "x",
                         ])
                     )
                 })

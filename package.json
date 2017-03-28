@@ -8,7 +8,7 @@
   },
   "scripts": {
     "build": "webpack",
-    "dev": "webpack-dev-server --port 9999",
+    "dev": "webpack-dev-server --port 9999 --host 0.0.0.0",
     "deploy-web": "docker exec -it ipfs-daemon ipfs add -r /stage/build",
     "test": "truffle test"
   },

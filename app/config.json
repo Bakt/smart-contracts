@@ -1,5 +1,5 @@
 {
-    "network": "testnet",
+    "network": "development",
     "testnet": {
         "services": "0x5501FD8B64D4Cf6f532947D6dDf6591542844482",
         "endpoint": "https://kovan.infura.io/metamask"
