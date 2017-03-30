@@ -16,15 +16,21 @@ const ContractStore = artifacts.require("./ContractStore.sol")
 const WithdrawalReserves = artifacts.require("./WithdrawalReserves.sol")
 const BackedValueContract = artifacts.require("./BackedValueContract.sol")
 
-const GAS_PRICE = 100000000000 // truffle / testrpc fixed gas price
-const ETH_PRICE = 12.80
+const GAS_PRICE_TRUFFLE = 100000000000  // truffle / testrpc fixed gas price (use this one for balance change checks)
+const GAS_PRICE_MAINNET = 18000000000   // mainnet price @ 30 Mar 2017 (use this for logging approx costs in real world)
+const ETH_PRICE = 5000                  // cents
 const WEI_PER_DOLLAR = web3.toWei(new BigNumber(1), 'ether').dividedBy(ETH_PRICE)
 const ONE_DOLLAR = WEI_PER_DOLLAR
 
 const { cents } = require('./helpers')
 const bal = (addr) => { return web3.eth.getBalance(addr).toNumber() }
 const balBigNumber = (addr) => { return web3.eth.getBalance(addr) }
-const gas = (receipt) => { return receipt.gasUsed * GAS_PRICE }
+const gas = (receipt) => { return receipt.gasUsed * GAS_PRICE_TRUFFLE }
+const gasMainNet = (receipt) => { return receipt.gasUsed * GAS_PRICE_MAINNET }
+const logCost = (op, receipt) => {
+    const eth = web3.fromWei(gasMainNet(receipt), 'ether')
+    console.log(`Gas(${op}): ${eth} ETH | ${((eth * ETH_PRICE) / 100).toFixed(4)} USD | ${receipt.gasUsed} GAS`)
+}
 
 contract('Integration Test - End to End', (accounts) => {
 
@@ -53,6 +59,7 @@ contract('Integration Test - End to End', (accounts) => {
         const args = ecResult.logs[0].args
         const newAddr = args.newContract
         assert.isTrue(web3.isAddress(newAddr))
+        logCost('new BVC', ecResult.receipt)
 
         /*
          *  Check the contract details
@@ -88,7 +95,7 @@ contract('Integration Test - End to End', (accounts) => {
         /*
          * TODO: take further and have one party withdraw from the contract
          */
-        
+
     })
 
     function createEntries(queue) {
