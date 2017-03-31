@@ -19,11 +19,6 @@ const endpoint = getEndpoint(config, truffleJs)
 window.App = {
     start: function() {
         const self = this
-        console.log("netConfig:", netConfig);
-
-        console.log("truffle:", truffleJs);
-
-        console.log("web3 network:", web3.version.network);
 
         let servicesAddr
         if (netConfig && netConfig.services) {
@@ -395,6 +390,9 @@ window.addEventListener('load', () => {
     web3.eth.getBlockNumber((err, res) => {
         console.log(`block height: ${res}`)
     })
+    console.log("web3 network:", web3.version.network);
+    console.log("truffle:", truffleJs);
+    console.log("netConfig:", netConfig);
 
     displayStatus()
 
