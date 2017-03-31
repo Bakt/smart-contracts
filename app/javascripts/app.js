@@ -13,10 +13,8 @@ import exJSON from '../../build/contracts/ExchangeRate.json'
 
 import truffleJs from '../../truffle'
 import config from '../config.json'
-const netConfig = truffleJs.networks[config.network]
-const endpoint = (netConfig)
-    ? `http://${netConfig.host}:${netConfig.port}`
-    : `http://localhost:8545`
+const netConfig = config[config.network]
+const endpoint = getEndpoint(config, truffleJs)
 
 window.App = {
     start: function() {
@@ -307,7 +305,7 @@ function displayStatus() {
     const tbl = $('#status-table tbody')
     const add = (name, addr) => { tbl.append(row([name, addr])) }
     add("web3 connected", web3.isConnected())
-    add("web3 provider", web3.currentProvider.host)
+    add("web3 provider", providerToString(web3.currentProvider))
     web3.version.getNetwork((err, res) => {
         add("network", res)
     })
@@ -345,6 +343,33 @@ function sendToQueue() {
     })
 }
 
+function providerToString(provider) {
+    let pStr
+    if (web3.currentProvider.isMetaMask === true) {
+        pStr = "MetaMask"
+    } else {
+        pStr = web3.currentProvider.host
+    }
+    return pStr
+}
+
+/**
+ * Use app/config.js override if exists, otherwise use the truffle network settings.
+ * This allows an infura.io public endpoint to be used for the DApp but a local
+ * one for migrations.
+ */
+function getEndpoint(config, truffleJs) {
+    let endpoint
+    const appNet = config.network
+    if (config[appNet].endpoint) {
+        endpoint = config[appNet].endpoint
+    } else {
+        const tNet = truffleJs.networks[appNet]
+        endpoint = `http://${tNet.host}:${tNet.port}`
+    }
+    return endpoint
+}
+
 window.addEventListener('load', () => {
     // Checking if Web3 has been injected by the browser
     if (typeof web3 !== 'undefined') {
@@ -359,6 +384,10 @@ window.addEventListener('load', () => {
     window.web3.eth.defaultAccount = web3.eth.accounts[0]
 
     console.log(`isConnected: ${window.web3.isConnected()}`)
+    console.log(`web3 provider: ${providerToString(web3.currentProvider)}`)
+    web3.eth.getBlockNumber((err, res) => {
+        console.log(`block height: ${res}`)
+    })
 
     displayStatus()
 
